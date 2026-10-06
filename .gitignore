@@ -1,0 +1,35 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Data and fitted artifacts never belong in this repo
+data/
+*.csv
+*.tsv
+*.parquet
+*.pkl
+*.joblib
+mlruns/
+
+# Node (the optional front end build lives outside this repo)
+node_modules/
+
+# Local runtime output
+logs/
+*.log
+.DS_Store
