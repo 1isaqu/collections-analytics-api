@@ -55,6 +55,7 @@ def final_select_aliases(sql: str) -> list[str]:
     Handles a leading ``WITH`` clause and ``SELECT TOP n``. For a ``UNION`` the last
     top-level ``SELECT`` is read, which has the same names as the others.
     """
+    sql = re.sub(r"--[^\n]*", "", sql)
     tokens = _depth0_tokens(sql)
     selects = [pos for pos, word in tokens if word == "SELECT"]
     start = selects[-1]

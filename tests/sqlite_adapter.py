@@ -69,10 +69,11 @@ def adapt(sql: str) -> str:
         lambda m: "(" + " || ".join(part.strip() for part in m.group(1).split(",")) + ")",
         sql,
     )
+    # datetime() keeps the time of day, like DATEADD on a datetime column does.
     sql = re.sub(
         r"DATEADD\(DAY,\s*(-?\d+),\s*([\w.]+)\)",
         lambda m: (
-            f"date({m.group(2)}, '{'+' if not m.group(1).startswith('-') else ''}{m.group(1)} day')"
+            f"datetime({m.group(2)}, '{'+' if not m.group(1).startswith('-') else ''}{m.group(1)} day')"
         ),
         sql,
     )
@@ -83,7 +84,7 @@ def adapt(sql: str) -> str:
     )
     sql = re.sub(
         r"DATEDIFF\(SECOND,\s*([\w.]+),\s*([\w.]+)\)",
-        r"CAST((julianday(\2) - julianday(\1)) * 86400 AS INTEGER)",
+        r"CAST(ROUND((julianday(\2) - julianday(\1)) * 86400) AS INTEGER)",
         sql,
     )
     sql = re.sub(r"CONVERT\(varchar\(10\),\s*([\w.]+),\s*120\)", r"substr(\1, 1, 10)", sql)
@@ -172,3 +173,38 @@ class _SqliteQueryConfig(QueryConfig):
             f") AS DA ON DA.agreement_id = {agreement_alias}.agreement_id\n"
             f"       AND DA.portfolio_id = {agreement_alias}.portfolio_id"
         )
+
+
+def add_contact_results(conn: sqlite3.Connection) -> None:
+    """Result catalogue: 1 reaches the right party, 2 an answer from someone else, 3 no answer."""
+    insert(
+        conn,
+        "contact_results",
+        [
+            {"result_id": 1, "label": "Promise", "answered": 1, "right_party": 1},
+            {"result_id": 2, "label": "Wrong person", "answered": 1, "right_party": 0},
+            {"result_id": 3, "label": "No answer", "answered": 0, "right_party": 0},
+        ],
+    )
+
+
+def add_events(
+    conn: sqlite3.Connection,
+    events: Iterable[tuple[int, int, int, int]],
+    when: str = "2026-03-18 10:00:00",
+) -> None:
+    """Outreach rows from ``(event_id, debt_owner_id, result_id, agent_id)`` tuples."""
+    insert(
+        conn,
+        "contact_events",
+        [
+            {
+                "event_id": event_id,
+                "debt_owner_id": owner,
+                "result_id": result,
+                "agent_id": agent,
+                "occurred_at": when,
+            }
+            for event_id, owner, result, agent in events
+        ],
+    )
