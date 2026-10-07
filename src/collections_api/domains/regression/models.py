@@ -93,7 +93,8 @@ def clean_points(
     unique: list[Mapping[str, Any]] = []
     for point in complete:
         identifier = point.get("id")
-        if identifier in seen:
+        # Points without an id cannot be duplicates of each other.
+        if identifier is not None and identifier in seen:
             continue
         seen.add(identifier)
         unique.append(point)

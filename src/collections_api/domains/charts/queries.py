@@ -57,6 +57,7 @@ AGENT_KINDS: dict[str, KindSpec] = {
 }
 
 SUMMARY_COLUMNS = ("first_installment_value", "agreement_count")
+PORTFOLIO_LABEL_COLUMNS = ("portfolio_label",)
 ROLLUP_COLUMNS = ("portfolio_label", "status_id", "agreement_count", "total_value")
 RECEIVED_COLUMNS = (
     "portfolio_label",
@@ -140,6 +141,25 @@ WHERE R.rn = 1
         return Query(sql, team_params(token))
 
     return aggregate_lines(cfg, line, base, group_columns=(), measures=SUMMARY_COLUMNS), label
+
+
+def portfolio_labels(cfg: QueryConfig, line: str) -> Query:
+    """Every non-blank portfolio label, once, across the lines in scope."""
+
+    def base(_line: str, database: str) -> Query:
+        sql = f"""
+SELECT DA.portfolio_label AS portfolio_label
+FROM {cfg.table(database, "debt_attributes", "DA")}
+WHERE DA.portfolio_label IS NOT NULL AND LTRIM(RTRIM(DA.portfolio_label)) <> ''"""
+        return Query(sql)
+
+    inner = cfg.across_lines(line, base)
+    sql = f"""SELECT DISTINCT portfolio_label
+FROM (
+{inner.sql}
+) AS sub
+ORDER BY portfolio_label"""
+    return Query(sql, inner.params)
 
 
 # --------------------------------------------------------------------------- by portfolio
