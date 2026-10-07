@@ -116,7 +116,7 @@ RECOMMENDED_INDEXES: tuple[IndexSpec, ...] = (
         "ix_contact_events_occurred_at",
         "contact_events",
         ("occurred_at",),
-        ("agent_id", "result_id", "debtor_id", "event_id"),
+        ("agent_id", "result_id", "debt_owner_id", "event_id"),
         "Outreach attempts in a window (productivity and benchmarks).",
     ),
     IndexSpec(

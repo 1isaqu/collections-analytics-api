@@ -55,3 +55,9 @@ src = ["src", "tests", "scripts"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
 ignore = ["B008"]  # FastAPI declares dependencies and Query() defaults in signatures
+
+[tool.ruff.lint.per-file-ignores]
+# SQL text lives in templates; wrapping it only makes the generated statements harder to read.
+"src/collections_api/domains/**" = ["E501"]
+"src/collections_api/core/sql.py" = ["E501"]
+"tests/sqlite_adapter.py" = ["E501"]
