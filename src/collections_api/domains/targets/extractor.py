@@ -287,6 +287,9 @@ def extract_pdf(
         pdfplumber = importlib.import_module("pdfplumber")
     except ImportError as exc:
         raise ExtractionError("Reading PDFs needs the 'pdf' extra (pdfplumber)") from exc
-    with pdfplumber.open(path) as pdf:
-        pages = [page.extract_words() for page in pdf.pages]
+    try:
+        with pdfplumber.open(path) as pdf:
+            pages = [page.extract_words() for page in pdf.pages]
+    except Exception as exc:  # the parser raises its own types for damaged or non-PDF input
+        raise ExtractionError("The file could not be read as a PDF") from exc
     return build_document(pages, source_name or path, layout)

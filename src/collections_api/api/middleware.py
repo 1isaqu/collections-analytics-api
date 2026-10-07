@@ -92,18 +92,28 @@ class BodyLimitMiddleware:
 
         received = 0
         started = False
+        exceeded = False
+        replaced = False
 
         async def counting_receive() -> Message:
-            nonlocal received
+            nonlocal received, exceeded
             message = await receive()
             if message["type"] == "http.request":
                 received += len(message.get("body", b""))
                 if received > limit:
+                    exceeded = True
                     raise _BodyTooLarge
             return message
 
         async def tracking_send(message: Message) -> None:
-            nonlocal started
+            nonlocal started, replaced
+            if exceeded:
+                # FastAPI turns a failed body read into its own 400. Answer 413 instead
+                # and drop whatever the application tries to send after the cut-off.
+                if not replaced:
+                    replaced = True
+                    await self._reject(scope, receive, send, limit, headers)
+                return
             if message["type"] == "http.response.start":
                 started = True
             await send(message)
@@ -113,7 +123,8 @@ class BodyLimitMiddleware:
         except _BodyTooLarge:
             if started:
                 raise
-            await self._reject(scope, receive, send, limit, headers)
+            if not replaced:
+                await self._reject(scope, receive, send, limit, headers)
 
     @staticmethod
     async def _reject(
