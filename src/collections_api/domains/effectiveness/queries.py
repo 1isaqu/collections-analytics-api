@@ -424,6 +424,7 @@ def break_curve_query(cfg: QueryConfig, line: str, period: Period, today: date) 
 
     Age is measured from the due date to today. The date a break was recorded is not
     used: batch processes can pile recorded breaks onto a few days and distort the curve.
+    The curve describes the slips themselves, so no agent exclusion list is applied.
     """
 
     def base(_line: str, database: str) -> Query:

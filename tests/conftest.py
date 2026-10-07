@@ -55,11 +55,21 @@ def make_app(tmp_path):
 
 
 @pytest.fixture()
-def client(make_app):
-    app, executor = make_app()
-    test_client = TestClient(app)
-    test_client.executor = executor
-    return test_client
+def client_for(make_app):
+    """Factory for a ``TestClient`` around ``make_app``. The fake executor is ``client.executor``."""
+
+    def build(env=None, **options):
+        app, executor = make_app(env, **options)
+        test_client = TestClient(app)
+        test_client.executor = executor
+        return test_client
+
+    return build
+
+
+@pytest.fixture()
+def client(client_for):
+    return client_for()
 
 
 @pytest.fixture()
