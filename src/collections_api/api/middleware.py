@@ -36,6 +36,7 @@ MULTIPART_OVERHEAD_BYTES = 64 * 1024
 REGRESSION_BYTES_PER_POINT = 1024
 
 CallNext = Callable[[Request], Awaitable[Response]]
+ALIAS_FLAG = "collections_api.via_api_prefix"
 
 
 @dataclass(frozen=True)
@@ -170,7 +171,11 @@ def install_middleware(app: FastAPI, protection: Protection) -> None:
         return response
 
     async def api_prefix_middleware(request: Request, call_next: CallNext) -> Response:
-        request.scope["path"] = normalize_api_path(request.scope.get("path", ""))
+        original = request.scope.get("path", "")
+        request.scope["path"] = normalize_api_path(original)
+        # Remember the alias: an unknown ``/api/...`` path must stay a 404 and not fall
+        # through to the single-page-app shell once the prefix is gone.
+        request.scope[ALIAS_FLAG] = request.scope["path"] != original
         return await call_next(request)
 
     app.middleware("http")(security_middleware)

@@ -52,8 +52,12 @@ ACTIVE, BROKEN, PAID, PENDING_EXCEPTION, REJECTED, AUTO_BROKEN, PAID_MANUAL = (
 )
 
 
+_OFFSET_FETCH = re.compile(r"OFFSET \? ROWS FETCH NEXT \? ROWS ONLY")
+
+
 def adapt(sql: str) -> str:
     """T-SQL to SQLite, syntax only."""
+    sql = _OFFSET_FETCH.sub("LIMIT ? OFFSET ?", sql)
     sql = re.sub(r"\b\w+\.dbo\.", "", sql)
     sql = sql.replace(" WITH (NOLOCK)", "")
     sql = re.sub(r"\n?OPTION \([^)]*\)\s*$", "", sql.rstrip())
@@ -106,7 +110,11 @@ def insert(conn: sqlite3.Connection, table: str, rows: Iterable[Mapping[str, Any
 
 def run(conn: sqlite3.Connection, query: Any) -> list[dict[str, Any]]:
     """Execute a ``Query`` (adapted) and return dict rows."""
-    cursor = conn.execute(adapt(query.sql), query.params)
+    params = query.params
+    if _OFFSET_FETCH.search(query.sql):
+        # T-SQL takes (offset, limit); SQLite's LIMIT comes first.
+        params = (*params[:-2], params[-1], params[-2])
+    cursor = conn.execute(adapt(query.sql), params)
     return [dict(row) for row in cursor.fetchall()]
 
 

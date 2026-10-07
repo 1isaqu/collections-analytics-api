@@ -11,10 +11,11 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 
 from collections_api.api.errors import error_response
+from collections_api.api.middleware import ALIAS_FLAG
 from collections_api.settings import Settings
 
 SPA_RESERVED_PREFIXES = (
@@ -66,8 +67,8 @@ def install_static_routes(app: FastAPI, settings: Settings) -> None:
         return
 
     @app.get("/{full_path:path}", include_in_schema=False)
-    def spa_fallback(full_path: str):
-        if full_path.startswith(SPA_RESERVED_PREFIXES):
+    def spa_fallback(request: Request, full_path: str):
+        if request.scope.get(ALIAS_FLAG) or full_path.startswith(SPA_RESERVED_PREFIXES):
             return error_response(404, "Not Found", None)
         candidate = resolve_inside(dist, full_path)
         if candidate is not None and candidate.is_file():

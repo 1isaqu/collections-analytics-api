@@ -120,7 +120,7 @@ class AgreementTableRow(BaseModel):
 
 class PerformanceRow(BaseModel):
     agent_name: str | None
-    attempt_count: int = Field(description="Distinct debt owners contacted, per agent and day.")
+    attempt_count: int = Field(description="Distinct debt owners contacted in the window.")
     agreement_count: int
     slips_issued: int = Field(description="Installments already due in the window.")
     slips_paid: int = Field(description="Of those, paid within the grace period.")

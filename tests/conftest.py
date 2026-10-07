@@ -5,18 +5,61 @@ from __future__ import annotations
 from datetime import date
 
 import pytest
+from fastapi.testclient import TestClient
 
 from collections_api.core.sql import Period, QueryConfig
+from collections_api.main import create_app
 from collections_api.settings import Settings
 from tests import sqlite_adapter as sq
+from tests.fakes import RecordingExecutor
 
 TODAY = date(2026, 3, 18)
 ISSUED = "2026-03-18 09:30:00"
 
 
+@pytest.fixture(scope="session")
+def openapi_schema() -> dict:
+    """The OpenAPI document of the default app. Generating it takes seconds, so once."""
+    return create_app(Settings.defaults(), executor=RecordingExecutor()).openapi()
+
+
 @pytest.fixture()
 def settings() -> Settings:
     return Settings.defaults()
+
+
+@pytest.fixture()
+def make_app(tmp_path):
+    """Factory for an app around a fake executor, with the background refresh off.
+
+    ``env`` overrides settings, ``answers`` maps a context fragment to rows. Returns
+    ``(app, executor)``.
+    """
+
+    def build(env=None, *, answers=None, executor=None, extra_routers=()):
+        values = {
+            "EFFECTIVENESS_ETL_ENABLED": "false",
+            "TARGETS_DIR": str(tmp_path / "targets"),
+        }
+        values.update(env or {})
+        recorder = executor or RecordingExecutor(answers)
+        app = create_app(
+            Settings.from_env(values),
+            executor=recorder,
+            extra_routers=extra_routers,
+            today=lambda: TODAY,
+        )
+        return app, recorder
+
+    return build
+
+
+@pytest.fixture()
+def client(make_app):
+    app, executor = make_app()
+    test_client = TestClient(app)
+    test_client.executor = executor
+    return test_client
 
 
 @pytest.fixture()
