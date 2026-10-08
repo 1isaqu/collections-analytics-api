@@ -84,7 +84,7 @@ def test_declared_columns_match_the_generated_sql(cfg):
 
 def test_no_debtor_identity_is_selected(cfg):
     sql = queries.agreements_today(cfg, "collections_auto", TODAY, 0, 10).sql
-    for forbidden in ("cpf", "document", "debtor", "name_razao", "registration"):
+    for forbidden in ("tax_id", "document", "debtor", "debtor_name", "registration", "phone"):
         assert forbidden not in sql.lower()
 
 

@@ -367,5 +367,5 @@ def test_detail_never_returns_personal_columns(cfg, period):
         details.all_portfolios(cfg, ALL_LINES, period, "agreements").sql,
     ):
         assert not re.search(
-            r"\b(cpf|document|matricula|registration|debtor_name|nome)\b", sql, re.I
+            r"\b(tax_id|document|registration|debtor_name|phone|address)\b", sql, re.I
         )

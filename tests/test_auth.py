@@ -43,7 +43,7 @@ def test_a_non_ascii_credential_is_401_not_a_crash(make_app):
     client, _ = with_auth(make_app)
     response = client.get(
         DATA_URL,
-        headers={"X-API-Key": "café".encode("latin-1"), "Authorization": GOOD["Authorization"]},
+        headers={"X-API-Key": "caf\xe9".encode("latin-1"), "Authorization": GOOD["Authorization"]},
     )
     assert response.status_code == 401
 

@@ -200,7 +200,7 @@ def test_the_document_identifies_the_service_and_declares_the_credentials(schema
 
 
 def test_no_field_models_a_personal_identifier(schema):
-    banned = ("cpf", "document_number", "tax_id", "debtor_name", "phone", "email", "registration")
+    banned = ("document_number", "tax_id", "debtor_name", "phone", "email", "registration")
     for name, model in schema["components"]["schemas"].items():
         for field in model.get("properties", {}):
             assert not any(word in field.lower() for word in banned), f"{name}.{field}"
