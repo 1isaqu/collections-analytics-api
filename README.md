@@ -20,7 +20,7 @@ The service sits between a database of collection agreements and a dashboard. It
 | regression | 1 | Fit five least-squares models of agent results on effort. |
 | admin | 2 | Recommended-index status and creation. Off unless enabled. |
 
-Beyond the route list, these are the parts worth reading:
+Some details of how it works:
 
 * Each KPI is computed by one SQL builder. The card, the chart and the drill-down list call the same one, so a number cannot come out two ways.
 * Aggregates over contact events and agreements are separate CTEs joined on the agent. Installments are de-duplicated with the business filters applied before the ranking. A portfolio label is resolved with `CROSS APPLY ... TOP 1`, so an agreement that covers several debts stays one row.
@@ -82,6 +82,8 @@ The service reads eight tables and nothing else: `agreements`, `agreement_debts`
 4. Give your status ids to `STATUS_IDS`. The seven status names are fixed (`ACTIVE`, `BROKEN`, `PAID`, `PENDING_EXCEPTION`, `REJECTED`, `AUTO_BROKEN`, `PAID_MANUAL`); the ids are yours. The sets the KPIs use, such as "generated", are built from them and can be replaced one by one.
 5. Start the service and call `GET /health/db`, then `GET /health/ready`. Then try `GET /dashboard/portfolios/auto`.
 6. Calibrate the business settings on your own data (see below) before you trust a number.
+
+[docs/data-sources.md](docs/data-sources.md) says where every row and every default in this repository comes from, and what the tests use in place of a database.
 
 One call and its response (the rows are invented):
 
@@ -185,8 +187,8 @@ src/collections_api/
     middleware.py  dependencies.py  errors.py  context.py  static.py  common.py
     field_help.py      shared field descriptions for the generated reference
 scripts/               export_openapi.py, export_api_contract.py
-docs/                  architecture, decisions, data contract, configuration, glossary,
-                       extending, and the two generated contract files
+docs/                  architecture, decisions, data contract, data sources, configuration,
+                       glossary, extending, and the two generated contract files
 tests/                 inline fixtures only
 ```
 
