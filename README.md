@@ -150,7 +150,7 @@ The suite needs no database and no network. It builds the app around a recording
 * the targets PDF extractor, fed synthetic words with checksums, and the regression models;
 * the documents: `docs/openapi.json` and `docs/api-contract.md` match a fresh export, every response model matches its query columns, and every column the SQL reads is listed in the data contract.
 
-CI also runs `ruff check`, `ruff format --check` and both export scripts with `--check`. A few tests start a fresh interpreter to prove the app imports without a driver or a database, and those dominate the run time.
+CI also runs `ruff check`, `ruff format --check` and both export scripts with `--check`. The full run takes a few minutes on a slow laptop. The slowest tests, at 10 to 20 seconds each there, start a fresh interpreter to prove the app imports without a driver or a database.
 
 ## Regenerating the contract documents
 
