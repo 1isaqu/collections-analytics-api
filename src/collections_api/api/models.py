@@ -17,19 +17,36 @@ from __future__ import annotations
 from functools import cache
 from typing import Any
 
-from pydantic import BaseModel, Field, create_model
+from pydantic import BaseModel, ConfigDict, Field, create_model
+
+from collections_api.api.field_help import describe
 
 # --------------------------------------------------------------------------- envelope
 
 
-class ErrorItem(BaseModel):
+def _fill_descriptions(schema: dict[str, Any], model: type[BaseModel]) -> None:
+    """Give every property that has no description of its own the registered default."""
+    for name, prop in schema.get("properties", {}).items():
+        if not prop.get("description"):
+            text = describe(model.__name__, name)
+            if text:
+                prop["description"] = text
+
+
+class ContractModel(BaseModel):
+    """Base of every documented model: fills in default field descriptions."""
+
+    model_config = ConfigDict(json_schema_extra=_fill_descriptions)
+
+
+class ErrorItem(ContractModel):
     message: str = Field(description="Human-readable message. Never contains SQL or driver text.")
     source: str | None = Field(
         default=None, description="Product line or series the message is about, when there is one."
     )
 
 
-class Pagination(BaseModel):
+class Pagination(ContractModel):
     limit: int | None = Field(default=None, description="Page size that was applied.")
     offset: int | None = Field(default=None, description="Offset that was applied.")
     total: int | None = Field(default=None, description="Rows available before paging.")
@@ -42,7 +59,7 @@ class Pagination(BaseModel):
     )
 
 
-class Meta(BaseModel):
+class Meta(ContractModel):
     generated_at: str = Field(description="UTC timestamp of this response, ISO 8601.")
     total_rows: int = Field(description="Rows in `data`. An object payload counts as 1.")
     sources: list[str] = Field(description="Product lines the data came from.")
@@ -58,7 +75,7 @@ class Meta(BaseModel):
     )
 
 
-class ErrorBody(BaseModel):
+class ErrorBody(ContractModel):
     detail: str = Field(description="One-line reason, the same text as `errors[0].message`.")
     meta: Meta
     data: list[Any] = Field(description="Always empty.")
@@ -84,7 +101,7 @@ def envelope(row: type[BaseModel], *, many: bool = True) -> type[BaseModel]:
 # --------------------------------------------------------------------------- agreements
 
 
-class AgreementTodayRow(BaseModel):
+class AgreementTodayRow(ContractModel):
     product_line: str = Field(description="Product line the installment belongs to.")
     agent_name: str | None = Field(description="Display name of the agent who made the agreement.")
     agreement_id: int
@@ -104,7 +121,7 @@ class AgreementTodayRow(BaseModel):
     payment_state: str = Field(description="`PAID` when `paid_at` is set, otherwise `OPEN`.")
 
 
-class AgreementTableRow(BaseModel):
+class AgreementTableRow(ContractModel):
     agent_name: str | None
     agreement_id: int
     portfolio_id: int
@@ -118,7 +135,7 @@ class AgreementTableRow(BaseModel):
     issued_at: str
 
 
-class PerformanceRow(BaseModel):
+class PerformanceRow(ContractModel):
     agent_name: str | None
     attempt_count: int = Field(description="Distinct debt owners contacted in the window.")
     agreement_count: int
@@ -141,7 +158,7 @@ class PerformanceRow(BaseModel):
 # --------------------------------------------------------------------------- productivity
 
 
-class ProductivityRow(BaseModel):
+class ProductivityRow(ContractModel):
     agent_login: str
     agent_name: str
     attempt_count: float = Field(description="Distinct debt owners contacted in the window.")
@@ -173,7 +190,7 @@ class ProductivityRow(BaseModel):
     )
 
 
-class LoadStatusRow(BaseModel):
+class LoadStatusRow(ContractModel):
     product_line: str = Field(description="Line name, or `all` for the summed row.")
     agent_count: int
     attempt_count: int
@@ -184,7 +201,7 @@ class LoadStatusRow(BaseModel):
     exception_value: float
 
 
-class AgentPerformanceRow(BaseModel):
+class AgentPerformanceRow(ContractModel):
     product_line: str
     agent_name: str | None
     agent_login: str | None
@@ -207,13 +224,13 @@ class AgentPerformanceRow(BaseModel):
     exception_first_installment_value: float
 
 
-class EffortCounts(BaseModel):
+class EffortCounts(ContractModel):
     attempt_count: int
     answer_count: int
     cpc_count: int
 
 
-class AgentEffortRow(BaseModel):
+class AgentEffortRow(ContractModel):
     agent_key: str = Field(
         description="Lower-cased login, or display name when there is none. Identifies one person."
     )
@@ -223,7 +240,7 @@ class AgentEffortRow(BaseModel):
     total: EffortCounts = Field(description="Counts summed over every line.")
 
 
-class Quartiles(BaseModel):
+class Quartiles(ContractModel):
     q1: float | None
     median: float | None
     q3: float | None
@@ -231,7 +248,7 @@ class Quartiles(BaseModel):
     mean: float | None
 
 
-class BenchmarkData(BaseModel):
+class BenchmarkData(ContractModel):
     cpc_rate_pct: Quartiles
     conversion_pct: Quartiles
     cash_effectiveness_pct: Quartiles
@@ -243,58 +260,58 @@ class BenchmarkData(BaseModel):
 # --------------------------------------------------------------------------- charts
 
 
-class FirstInstallmentSummaryRow(BaseModel):
+class FirstInstallmentSummaryRow(ContractModel):
     first_installment_value: float | None
     agreement_count: int | None
 
 
-class PortfolioLabelRow(BaseModel):
+class PortfolioLabelRow(ContractModel):
     portfolio_label: str
 
 
-class ExceptionsByPortfolioRow(BaseModel):
+class ExceptionsByPortfolioRow(ContractModel):
     portfolio_label: str
     exception_count: int
     exception_value: float
 
 
-class AgreementsByPortfolioRow(BaseModel):
+class AgreementsByPortfolioRow(ContractModel):
     portfolio_label: str
     agreement_count: int
     agreement_value: float
 
 
-class RejectedByPortfolioRow(BaseModel):
+class RejectedByPortfolioRow(ContractModel):
     portfolio_label: str
     rejected_count: int
     rejected_value: float
 
 
-class BrokenByPortfolioRow(BaseModel):
+class BrokenByPortfolioRow(ContractModel):
     portfolio_label: str
     broken_count: int
     broken_value: float
 
 
-class FirstInstallmentByPortfolioRow(BaseModel):
+class FirstInstallmentByPortfolioRow(ContractModel):
     portfolio_label: str
     agreement_count: int
     first_installment_value: float
 
 
-class ExceptionsByAgentRow(BaseModel):
+class ExceptionsByAgentRow(ContractModel):
     agent_name: str | None
     exception_count: int
     exception_value: float
 
 
-class FirstInstallmentByAgentRow(BaseModel):
+class FirstInstallmentByAgentRow(ContractModel):
     agent_name: str | None
     first_installment_count: int
     first_installment_value: float
 
 
-class PortfolioRollupRow(BaseModel):
+class PortfolioRollupRow(ContractModel):
     portfolio_label: str
     status_id: int
     agreement_count: int = Field(
@@ -303,14 +320,14 @@ class PortfolioRollupRow(BaseModel):
     total_value: float
 
 
-class ReceivedByPortfolioRow(BaseModel):
+class ReceivedByPortfolioRow(ContractModel):
     portfolio_label: str
     agreement_count: int
     received_value: float = Field(description="Cash paid inside the window, by payment date.")
     first_installment_received: float
 
 
-class ExceptionWithoutPortfolioRow(BaseModel):
+class ExceptionWithoutPortfolioRow(ContractModel):
     agreement_id: int
     portfolio_id: int
     first_installment_value: float
@@ -318,7 +335,7 @@ class ExceptionWithoutPortfolioRow(BaseModel):
     agent_name: str | None
 
 
-class AgreementDetailRow(BaseModel):
+class AgreementDetailRow(ContractModel):
     agreement_id: int
     portfolio_id: int
     first_installment_value: float
@@ -336,21 +353,21 @@ class AgreementDetailAllRow(AgreementDetailRow):
 # --------------------------------------------------------------------------- effectiveness
 
 
-class SeriesByIssueDayRow(BaseModel):
+class SeriesByIssueDayRow(ContractModel):
     issue_date: str = Field(description="YYYY-MM-DD.")
     slips_issued: int
     slips_paid_in_grace: int
     conversion_pct: int = Field(description="Whole percent, rounded half up.")
 
 
-class SeriesByDueDayRow(BaseModel):
+class SeriesByDueDayRow(ContractModel):
     due_date: str = Field(description="YYYY-MM-DD.")
     slips_issued: int
     slips_paid_in_grace: int
     conversion_pct: int
 
 
-class SeriesByMonthRow(BaseModel):
+class SeriesByMonthRow(ContractModel):
     year: int
     month: int
     slips_issued: int
@@ -358,7 +375,7 @@ class SeriesByMonthRow(BaseModel):
     conversion_pct: int
 
 
-class SeriesByAgentMonthRow(BaseModel):
+class SeriesByAgentMonthRow(ContractModel):
     agent_login: str | None
     year: int
     month: int
@@ -371,7 +388,7 @@ class SeriesByAgentMonthBrokenRow(SeriesByAgentMonthRow):
     broken_count: int
 
 
-class EffectivenessKpis(BaseModel):
+class EffectivenessKpis(ContractModel):
     slips_total: int
     agreements_total: int
     slips_to_mature: int = Field(description="Due today or later and not yet paid.")
@@ -385,7 +402,7 @@ class EffectivenessKpis(BaseModel):
     effectiveness_pct: float | None = Field(description="amount_received / amount_maturing * 100.")
 
 
-class EffectivenessDay(BaseModel):
+class EffectivenessDay(ContractModel):
     due_date: str
     slips_total: int
     slips_paid_in_grace: int
@@ -395,14 +412,14 @@ class EffectivenessDay(BaseModel):
     effectiveness_pct: float | None
 
 
-class EffectivenessSummaryData(BaseModel):
+class EffectivenessSummaryData(ContractModel):
     kpis: EffectivenessKpis
     daily: list[EffectivenessDay]
     best_day: EffectivenessDay | None = Field(description="Day with the highest effectiveness.")
     worst_day: EffectivenessDay | None = Field(description="Day with the lowest effectiveness.")
 
 
-class SlipDetailRow(BaseModel):
+class SlipDetailRow(ContractModel):
     agreement_id: int
     portfolio_id: int
     slip_amount: float
@@ -417,14 +434,14 @@ class SlipDetailRow(BaseModel):
     original_debt_value: float | None
 
 
-class BreakCurveRow(BaseModel):
+class BreakCurveRow(ContractModel):
     band: str = Field(description="Days since the due date, for example `0-7 days` or `91+ days`.")
     slips_total: int
     slips_broken: int
     break_rate_pct: float | None
 
 
-class PortfolioEffectivenessSummaryRow(BaseModel):
+class PortfolioEffectivenessSummaryRow(ContractModel):
     slips_total: int
     slips_paid_in_grace: int | None
     amount_maturing: float
@@ -436,7 +453,7 @@ class PortfolioEffectivenessRow(PortfolioEffectivenessSummaryRow):
     portfolio_label: str
 
 
-class GenerationRankingRow(BaseModel):
+class GenerationRankingRow(ContractModel):
     portfolio_label: str
     agreement_count: int
     agreement_value: float
@@ -445,7 +462,7 @@ class GenerationRankingRow(BaseModel):
 # --------------------------------------------------------------------------- targets
 
 
-class TargetRow(BaseModel):
+class TargetRow(ContractModel):
     office: str | None
     portfolio: str
     group: str | None = Field(description="One of the configured group names.")
@@ -456,7 +473,7 @@ class TargetRow(BaseModel):
     total_target: dict[str, float] = Field(description="Cash target plus recovery value target.")
 
 
-class TargetUploadResult(BaseModel):
+class TargetUploadResult(ContractModel):
     period: str = Field(description="Quarter label such as `3Q26`.")
     row_count: int
 
@@ -464,7 +481,7 @@ class TargetUploadResult(BaseModel):
 # --------------------------------------------------------------------------- regression
 
 
-class RegressionPoint(BaseModel):
+class RegressionPoint(ContractModel):
     id: str | int | None = Field(default=None, description="Opaque id. Repeated ids are dropped.")
     efficiency: float | None = None
     value: float | None = Field(default=None, description="The outcome the models explain.")
@@ -474,14 +491,14 @@ class RegressionPoint(BaseModel):
     conversion: float | None = None
 
 
-class RegressionRequest(BaseModel):
+class RegressionRequest(ContractModel):
     points: list[RegressionPoint] = Field(
         min_length=1,
         description="One point per agent. A point with a missing field is dropped and counted.",
     )
 
 
-class CleaningSummaryModel(BaseModel):
+class CleaningSummaryModel(ContractModel):
     raw_count: int
     clean_count: int
     removed_nulls: int
@@ -489,13 +506,13 @@ class CleaningSummaryModel(BaseModel):
     removed_outliers: int
 
 
-class CoefficientModel(BaseModel):
+class CoefficientModel(ContractModel):
     name: str
     value: float
     se: float = Field(description="Standard error from the training rows.")
 
 
-class RegressionModelFit(BaseModel):
+class RegressionModelFit(ContractModel):
     id: str = Field(description="`simple`, `loglog`, `poly2`, `volume` or `full`.")
     label: str
     description: str
@@ -510,7 +527,7 @@ class RegressionModelFit(BaseModel):
     coefficients: list[CoefficientModel]
 
 
-class RegressionData(BaseModel):
+class RegressionData(ContractModel):
     cleaning: CleaningSummaryModel
     models: list[RegressionModelFit] = Field(description="Empty when fewer than 3 clean points.")
 
@@ -518,7 +535,7 @@ class RegressionData(BaseModel):
 # --------------------------------------------------------------------------- admin
 
 
-class IndexInfo(BaseModel):
+class IndexInfo(ContractModel):
     name: str
     table: str
     key_columns: list[str]
@@ -527,7 +544,7 @@ class IndexInfo(BaseModel):
     exists: bool
 
 
-class IndexStatusData(BaseModel):
+class IndexStatusData(ContractModel):
     product_line: str
     total_recommended: int
     existing: int
@@ -535,7 +552,7 @@ class IndexStatusData(BaseModel):
     indexes: list[IndexInfo]
 
 
-class IndexStep(BaseModel):
+class IndexStep(ContractModel):
     name: str
     table: str
     sql: str
@@ -543,14 +560,14 @@ class IndexStep(BaseModel):
     error: str | None
 
 
-class StatisticsStep(BaseModel):
+class StatisticsStep(ContractModel):
     target: str
     sql: str
     action: str = Field(description="`updated`, `would_update` or `failed`.")
     error: str | None
 
 
-class IndexApplyData(BaseModel):
+class IndexApplyData(ContractModel):
     product_line: str
     dry_run: bool
     online: bool
@@ -563,23 +580,23 @@ class IndexApplyData(BaseModel):
 # --------------------------------------------------------------------------- health
 
 
-class LiveStatus(BaseModel):
+class LiveStatus(ContractModel):
     status: str = Field(description="Always `ok`.")
 
 
-class DatabaseStatus(BaseModel):
+class DatabaseStatus(ContractModel):
     status: str = Field(description="`ok`.")
     product_line: str
     connection: str = Field(description="`connected`.")
 
 
-class AllDatabasesStatus(BaseModel):
+class AllDatabasesStatus(ContractModel):
     status: str = Field(description="`ok`.")
     product_lines: list[str]
     connection: str
 
 
-class EffectivenessRefreshStatus(BaseModel):
+class EffectivenessRefreshStatus(ContractModel):
     enabled: bool
     last_run_age_seconds: float | None = Field(
         description="Seconds since a refresh last produced rows. `null` before the first one."
@@ -587,7 +604,7 @@ class EffectivenessRefreshStatus(BaseModel):
     interval_seconds: float
 
 
-class ReadyStatus(BaseModel):
+class ReadyStatus(ContractModel):
     status: str = Field(description="`ok`, or `degraded` (HTTP 503) when a line is down.")
     product_lines: dict[str, str] = Field(description="`ok` or a short reason, per line.")
     effectiveness_refresh: EffectivenessRefreshStatus
