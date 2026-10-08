@@ -29,7 +29,7 @@ Invalid values stop the service at start-up with a message that names the variab
 | `REQUIRE_API_AUTH` | `false` | Require `X-API-Key` and `Authorization: Bearer` on every protected route. |
 | `API_KEY` | (empty) | Expected `X-API-Key`. Needed when auth is required. |
 | `API_TOKEN` | (empty) | Expected bearer token. Needed when auth is required. |
-| `RATE_LIMIT_REQUESTS` | `120` | Requests allowed per window and (client address, API key) pair on rate-limited prefixes. |
+| `RATE_LIMIT_REQUESTS` | `120` | Requests allowed per window and client address on rate-limited prefixes. |
 | `RATE_LIMIT_WINDOW_SECONDS` | `60` | Length of the rate-limit window. |
 | `RATE_LIMIT_MAX_BUCKETS` | `5000` | Distinct callers tracked before expired windows are pruned. |
 | `CORS_ALLOW_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Comma-separated allowed origins. The upload route also rejects an `Origin` header that is not in this list. |

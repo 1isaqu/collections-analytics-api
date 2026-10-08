@@ -218,6 +218,23 @@ def test_performance_counts_effort_by_distinct_debt_owner(db, sqlite_cfg):
     assert (rows["Agent 02"]["attempt_count"], rows["Agent 02"]["cpc_count"]) == (1, 1)
 
 
+def test_a_right_party_flag_without_an_answer_is_not_a_cpc(db, sqlite_cfg):
+    sq.insert(
+        db,
+        "contact_results",
+        [
+            {"result_id": 1, "label": "Promise", "answered": 1, "right_party": 1},
+            {"result_id": 4, "label": "Odd result", "answered": 0, "right_party": 1},
+            {"result_id": 3, "label": "No answer", "answered": 0, "right_party": 0},
+        ],
+    )
+    sq.add_events(db, [(1, 101, 1, 1), (2, 102, 4, 1), (3, 103, 3, 1), (4, 104, 3, 1)])
+    rows = sq.run(db, queries.performance_table(sqlite_cfg, "auto", DAY, TODAY, "Agent 01"))
+    one = rows[0]
+    assert (one["attempt_count"], one["answer_count"], one["cpc_count"]) == (4, 1, 1)
+    assert one["attempt_count"] >= one["answer_count"] >= one["cpc_count"]
+
+
 def test_performance_value_columns_come_from_generated_agreements(db, sqlite_cfg):
     add_effort(db)
     rows = {
