@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from collections_api.core.envelope import build_envelope
@@ -24,9 +24,7 @@ def serve_series(
         raise ApiError(503, "The effectiveness data is not loaded yet. Try again in a moment.")
     sources = [name for name, _ in cfg.scope(line)]
     fetched = (
-        datetime.fromtimestamp(state.fetched_at, tz=timezone.utc).isoformat()
-        if state.fetched_at
-        else None
+        datetime.fromtimestamp(state.fetched_at, tz=UTC).isoformat() if state.fetched_at else None
     )
     errors = (
         [{"source": f"{series}:{line}", "message": f"The last refresh failed: {state.error}"}]

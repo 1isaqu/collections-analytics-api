@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -163,7 +163,7 @@ def test_serving_before_the_first_refresh_is_a_503():
 
 
 def test_a_served_series_says_when_it_was_read_and_that_it_is_fresh():
-    moment = datetime(2026, 3, 18, 12, 0, tzinfo=timezone.utc)
+    moment = datetime(2026, 3, 18, 12, 0, tzinfo=UTC)
     refreshed = store(RecordingExecutor(default=[ROW]), Clock(moment.timestamp()))
     refreshed.refresh()
     envelope = serve_series(refreshed, CFG, "daily-first", "consumer")

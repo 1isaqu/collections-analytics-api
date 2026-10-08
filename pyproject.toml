@@ -7,7 +7,7 @@ name = "collections-analytics-api"
 version = "0.1.0"
 description = "Read-only FastAPI analytics service for collections KPIs"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Isaque Carvalho" }]
 dependencies = [
@@ -53,7 +53,7 @@ filterwarnings = [
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 src = ["src", "tests", "scripts"]
 
 [tool.ruff.lint]

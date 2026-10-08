@@ -28,7 +28,7 @@ import os
 import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 Word = Mapping[str, Any]
@@ -263,7 +263,7 @@ def build_document(
         raise ExtractionError("Validation failed:\n" + "\n".join(f"  - {p}" for p in problems))
 
     first = months[0]
-    moment = now or datetime.now(tz=timezone.utc)
+    moment = now or datetime.now(tz=UTC)
     return {
         "meta": {
             "period": period_from_name(source_name, moment),

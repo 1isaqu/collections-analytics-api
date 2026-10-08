@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -11,7 +11,7 @@ from collections_api.domains.targets import extractor
 from collections_api.domains.targets.store import TargetsStore
 from tests import targets_pdf as t
 
-NOW = datetime(2026, 8, 5, 12, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 8, 5, 12, 0, tzinfo=UTC)
 
 
 def document(period="3Q26"):
