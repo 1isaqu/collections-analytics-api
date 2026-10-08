@@ -50,9 +50,8 @@ FROM    dbo.installments AS i;
 * Timestamps are `datetime`-like values without a time zone. The service compares them
   with calendar dates in the server's local day and does not shift them.
 * `NULL` means "not known or not applicable". Where a column may be `NULL` it says so.
-* The tables hold no personal data about the people being collected from. The service has
-  no column for a name, a document number, a phone number or an address, and none of its
-  responses carries one.
+* The contract has no personal data about the people being collected from: no column for a
+  name, a document number, a phone number or an address, and no response carries one.
 
 ## Tables
 
@@ -164,12 +163,12 @@ The status catalogue. The service uses it only to show a label next to a status 
 | `display_name` | text | Name shown in responses. |
 | `login` | text | Login. Together with `display_name` it is matched by the agent exclusion patterns and by the `team` filter. |
 
-## Columns of the shared contract that are not read
+## Columns you will probably have but the service does not read
 
-The wider contract used across these projects also names `contact_events.event_id`,
+A fuller version of this schema would also hold `contact_events.event_id`,
 `debts.portfolio_id`, `debts.contract_no`, `debts.days_overdue` and
-`contact_results.label`. This service does not select them. A real table will usually have
-them anyway.
+`contact_results.label`. The service never selects them, and the coverage test does not
+require them.
 
 ## Statuses
 

@@ -149,8 +149,9 @@ in the contract.
 
 `docs/openapi.json` and `docs/api-contract.md` come from the running app. A test fails when
 either file differs from a fresh export, when a route lacks notes, when a model field lacks
-a description, and when the export would need a driver, a database or an `.env` file. The
-user interface is built against these two files, so they must not be able to go stale.
+a description, and when the export would need a driver, a database or an `.env` file. A
+front end can be built against these two files before any database exists, which only works
+if they cannot go stale.
 
 ## One error shape
 
