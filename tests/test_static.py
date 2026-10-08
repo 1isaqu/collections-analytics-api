@@ -57,7 +57,9 @@ def test_api_prefixes_are_never_answered_with_the_shell(make_app, dist):
         assert INDEX not in response.text
 
 
-@pytest.mark.parametrize("path", ["/%2e%2e/secret.txt", "/..%2fsecret.txt", "/assets/../../secret.txt"])
+@pytest.mark.parametrize(
+    "path", ["/%2e%2e/secret.txt", "/..%2fsecret.txt", "/assets/../../secret.txt"]
+)
 def test_traversal_never_leaves_the_dist_directory(make_app, dist, path):
     response = spa_client(make_app, dist).get(path)
     assert SECRET not in response.text

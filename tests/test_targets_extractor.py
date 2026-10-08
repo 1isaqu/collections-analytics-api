@@ -56,7 +56,18 @@ def test_the_thousands_separator_is_read_from_a_value_with_two_of_them():
 def test_a_document_that_writes_numbers_with_dots_is_read_correctly():
     rows = [
         t.HEADER,
-        edited(t.GROUP_A, c4="1.000.000,50", c13="1.000.500,50", c10="500", c5="0", c6="0", c11="0", c12="0", c14="0", c15="0"),
+        edited(
+            t.GROUP_A,
+            c4="1.000.000,50",
+            c13="1.000.500,50",
+            c10="500",
+            c5="0",
+            c6="0",
+            c11="0",
+            c12="0",
+            c14="0",
+            c15="0",
+        ),
         edited(t.TOTAL, c13="1.000.500,50", c14="0", c15="0"),
     ]
     document = build(rows)
@@ -114,7 +125,11 @@ def test_a_valid_document_is_parsed_with_its_metadata():
         "recovery_value_target": {"202601": 500.0, "202602": 600.0, "202603": 700.0},
         "total_target": {"202601": 1500.0, "202602": 1700.0, "202603": 1900.0},
     }
-    assert second["group"] == "Group B" and second["recovery_count_target"] == {"202601": 4, "202602": 4, "202603": 4}
+    assert second["group"] == "Group B" and second["recovery_count_target"] == {
+        "202601": 4,
+        "202602": 4,
+        "202603": 4,
+    }
 
 
 def test_titles_and_footers_are_not_data_rows():
@@ -133,7 +148,9 @@ def test_the_group_names_come_from_the_layout():
     renamed = Layout(group_names=("Group A", "Group C"))
     with pytest.raises(ExtractionError, match="Validation failed"):
         build(t.document_lines(), layout=renamed)  # Group B no longer counts, the sums break
-    document = build([t.HEADER, t.GROUP_A, edited(t.GROUP_B, c2="Group C"), t.TOTAL], layout=renamed)
+    document = build(
+        [t.HEADER, t.GROUP_A, edited(t.GROUP_B, c2="Group C"), t.TOTAL], layout=renamed
+    )
     assert document["rows"][1]["group"] == "Group C"
 
 
@@ -176,7 +193,27 @@ def test_rows_that_do_not_add_up_to_the_total_row_are_rejected():
         ([["Quarterly", "targets"], ["no", "table", "here"]], "Column header row not found"),
         ([t.HEADER, t.TOTAL], "No data rows"),
         ([t.HEADER, t.GROUP_A, t.GROUP_B], "TOTAL row not found"),
-        ([edited(t.HEADER, c4="x", c5="y", c6="z", c7="a", c8="b", c9="c", c10="d", c11="e", c12="f", c13="g", c14="h", c15="i"), t.GROUP_A], "Month columns"),
+        (
+            [
+                edited(
+                    t.HEADER,
+                    c4="x",
+                    c5="y",
+                    c6="z",
+                    c7="a",
+                    c8="b",
+                    c9="c",
+                    c10="d",
+                    c11="e",
+                    c12="f",
+                    c13="g",
+                    c14="h",
+                    c15="i",
+                ),
+                t.GROUP_A,
+            ],
+            "Month columns",
+        ),
     ],
 )
 def test_structural_failures_name_the_problem(lines, message):

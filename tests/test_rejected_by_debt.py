@@ -42,7 +42,13 @@ def conn():
         connection,
         "debts",
         [
-            {"debt_id": d, "portfolio_id": 1, "contract_no": f"C{d}", "balance": 1000.0, "due_at": "2025-12-01"}
+            {
+                "debt_id": d,
+                "portfolio_id": 1,
+                "contract_no": f"C{d}",
+                "balance": 1000.0,
+                "due_at": "2025-12-01",
+            }
             for d in (1, 2, 3, 4)
         ],
     )
@@ -96,7 +102,10 @@ def test_the_agent_of_the_latest_rejection_gets_the_credit(conn, sqlite_cfg):
     reject(conn, 8002, 2, 350.0, "2026-03-18 11:00:00", debts=[3])
     result = rows(conn, sqlite_cfg)
     assert result["Agent 01"]["rejected_count"] == 0
-    assert (result["Agent 02"]["rejected_count"], result["Agent 02"]["rejected_value"]) == (1, 350.0)
+    assert (result["Agent 02"]["rejected_count"], result["Agent 02"]["rejected_value"]) == (
+        1,
+        350.0,
+    )
 
 
 def test_one_agreement_over_two_debts_counts_both_debts_but_its_value_once(conn, sqlite_cfg):

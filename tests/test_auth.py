@@ -41,7 +41,10 @@ def test_both_credentials_open_the_route(make_app):
 
 def test_a_non_ascii_credential_is_401_not_a_crash(make_app):
     client, _ = with_auth(make_app)
-    response = client.get(DATA_URL, headers={"X-API-Key": "café".encode("latin-1"), "Authorization": GOOD["Authorization"]})
+    response = client.get(
+        DATA_URL,
+        headers={"X-API-Key": "café".encode("latin-1"), "Authorization": GOOD["Authorization"]},
+    )
     assert response.status_code == 401
 
 

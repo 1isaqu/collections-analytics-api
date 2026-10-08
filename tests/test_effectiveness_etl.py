@@ -16,7 +16,12 @@ from collections_api.settings import Settings
 from tests.fakes import RecordingExecutor
 
 CFG = QueryConfig.from_settings(Settings.defaults())
-ROW = {"issue_date": "2026-03-01", "slips_issued": 2, "slips_paid_in_grace": 1, "conversion_pct": 50}
+ROW = {
+    "issue_date": "2026-03-01",
+    "slips_issued": 2,
+    "slips_paid_in_grace": 1,
+    "conversion_pct": 50,
+}
 
 
 class Clock:
@@ -38,7 +43,9 @@ def store(executor, clock=None, series=("daily-first", "monthly-first")):
 
 
 def failing(key):
-    return {f"effectiveness-refresh/{key}": ApiError(504, "The query exceeded the database time limit.")}
+    return {
+        f"effectiveness-refresh/{key}": ApiError(504, "The query exceeded the database time limit.")
+    }
 
 
 def test_a_refresh_queries_every_series_for_every_variant():
@@ -75,7 +82,10 @@ def test_a_failing_key_never_stops_the_others():
     refreshed = store(executor)
     refreshed.refresh()
     assert refreshed.state("daily-first", "auto").rows is None
-    assert refreshed.state("daily-first", "auto").error == "The query exceeded the database time limit."
+    assert (
+        refreshed.state("daily-first", "auto").error
+        == "The query exceeded the database time limit."
+    )
     assert refreshed.state("daily-first", "consumer").rows == [ROW]
     assert refreshed.state("monthly-first", "auto").rows == [ROW]
 
@@ -119,7 +129,9 @@ def test_the_snapshot_lists_keys_and_ages():
     refreshed = store(RecordingExecutor(default=[ROW]), clock, series=("daily-first",))
     refreshed.refresh()
     assert refreshed.snapshot() == {
-        "daily-first:all": 42.0, "daily-first:auto": 42.0, "daily-first:consumer": 42.0,
+        "daily-first:all": 42.0,
+        "daily-first:auto": 42.0,
+        "daily-first:consumer": 42.0,
     }
 
 
@@ -158,7 +170,11 @@ def test_a_served_series_says_when_it_was_read_and_that_it_is_fresh():
     assert envelope["data"] == [ROW]
     assert envelope["meta"]["sources"] == ["consumer"]
     assert envelope["meta"]["quality"] == {"fetched_at": moment.isoformat(), "stale": False}
-    assert envelope["meta"]["filters"] == {"series": "daily-first", "line": "consumer", "from": "2020-01-01"}
+    assert envelope["meta"]["filters"] == {
+        "series": "daily-first",
+        "line": "consumer",
+        "from": "2020-01-01",
+    }
     assert envelope["errors"] == []
 
 

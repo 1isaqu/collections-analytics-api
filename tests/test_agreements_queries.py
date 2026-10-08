@@ -54,7 +54,13 @@ def add_effort(db):
         db,
         "contact_events",
         [
-            {"event_id": e, "debt_owner_id": owner, "result_id": result, "agent_id": agent, "occurred_at": when}
+            {
+                "event_id": e,
+                "debt_owner_id": owner,
+                "result_id": result,
+                "agent_id": agent,
+                "occurred_at": when,
+            }
             for e, owner, result, agent in events
         ],
     )
@@ -65,7 +71,10 @@ def add_effort(db):
 
 def test_declared_columns_match_the_generated_sql(cfg):
     today_query = queries.agreements_today(cfg, "collections_auto", TODAY, 0, 10)
-    assert final_select_aliases(today_query.sql) == ["_total_rows", *queries.AGREEMENTS_TODAY_COLUMNS]
+    assert final_select_aliases(today_query.sql) == [
+        "_total_rows",
+        *queries.AGREEMENTS_TODAY_COLUMNS,
+    ]
     for line in ("auto", ALL_LINES):
         table, _ = queries.agreements_table(cfg, line, TODAY, None, None)
         assert final_select_aliases(table.sql) == list(queries.AGREEMENTS_TABLE_COLUMNS)
@@ -103,7 +112,10 @@ def test_today_lists_every_installment_of_approved_agreements_once(db, sqlite_cf
 
 
 def test_today_excludes_other_statuses_and_excluded_agents(db, sqlite_cfg):
-    ids = {r["agreement_id"] for r in sq.run(db, queries.agreements_today(sqlite_cfg, "x", TODAY, 0, 50))}
+    ids = {
+        r["agreement_id"]
+        for r in sq.run(db, queries.agreements_today(sqlite_cfg, "x", TODAY, 0, 50))
+    }
     assert ids == {5001, 5006}  # no exceptions, rejected, broken, or the excluded agent's 5005
 
 
@@ -118,7 +130,11 @@ def test_today_marks_paid_installments(db, sqlite_cfg):
     sq.insert(
         db,
         "agreements",
-        [sq.installment(row_id=40, agreement_id=7001, paid_amount=100.0, paid_at="2026-03-18 12:00:00")],
+        [
+            sq.installment(
+                row_id=40, agreement_id=7001, paid_amount=100.0, paid_at="2026-03-18 12:00:00"
+            )
+        ],
     )
     sq.insert(db, "agreement_debts", [{"agreement_id": 7001, "portfolio_id": 1, "debt_id": 11}])
     rows = sq.run(db, queries.agreements_today(sqlite_cfg, "x", TODAY, 0, 50))
@@ -182,7 +198,9 @@ def test_table_all_lines_adds_the_agent_to_the_ordering(cfg):
     single, _ = queries.agreements_table(cfg, "auto", TODAY, None, None)
     both, _ = queries.agreements_table(cfg, ALL_LINES, TODAY, None, None)
     assert single.sql.rstrip().endswith("ORDER BY base.is_exception, base.agreement_id")
-    assert both.sql.rstrip().endswith("ORDER BY base.is_exception, base.agent_name, base.agreement_id")
+    assert both.sql.rstrip().endswith(
+        "ORDER BY base.is_exception, base.agent_name, base.agreement_id"
+    )
 
 
 # ---------------------------------------------------------------- performance table
@@ -190,7 +208,10 @@ def test_table_all_lines_adds_the_agent_to_the_ordering(cfg):
 
 def test_performance_counts_effort_by_distinct_debt_owner(db, sqlite_cfg):
     add_effort(db)
-    rows = {r["agent_name"]: r for r in sq.run(db, queries.performance_table(sqlite_cfg, "auto", DAY, TODAY, None))}
+    rows = {
+        r["agent_name"]: r
+        for r in sq.run(db, queries.performance_table(sqlite_cfg, "auto", DAY, TODAY, None))
+    }
     assert set(rows) == {"Agent 01", "Agent 02"}  # the excluded agent never shows
     one = rows["Agent 01"]
     assert (one["attempt_count"], one["answer_count"], one["cpc_count"]) == (3, 2, 1)
@@ -199,7 +220,10 @@ def test_performance_counts_effort_by_distinct_debt_owner(db, sqlite_cfg):
 
 def test_performance_value_columns_come_from_generated_agreements(db, sqlite_cfg):
     add_effort(db)
-    rows = {r["agent_name"]: r for r in sq.run(db, queries.performance_table(sqlite_cfg, "auto", DAY, TODAY, None))}
+    rows = {
+        r["agent_name"]: r
+        for r in sq.run(db, queries.performance_table(sqlite_cfg, "auto", DAY, TODAY, None))
+    }
     one, two = rows["Agent 01"], rows["Agent 02"]
     assert one["agreement_count"] == 3  # 5001 once however many installments, 5004, 5006
     assert one["agreement_value"] == 2600.0 and one["first_installment_value"] == 1600.0
@@ -211,7 +235,10 @@ def test_performance_value_columns_come_from_generated_agreements(db, sqlite_cfg
 
 def test_performance_ratios(db, sqlite_cfg):
     add_effort(db)
-    rows = {r["agent_name"]: r for r in sq.run(db, queries.performance_table(sqlite_cfg, "auto", DAY, TODAY, None))}
+    rows = {
+        r["agent_name"]: r
+        for r in sq.run(db, queries.performance_table(sqlite_cfg, "auto", DAY, TODAY, None))
+    }
     one = rows["Agent 01"]
     assert one["conversion_pct"] == pytest.approx(300.0)  # 3 agreements over 1 right-party contact
     assert one["cpc_rate_pct"] == pytest.approx(50.0)  # 1 of 2 answers
@@ -227,7 +254,15 @@ def test_performance_a_ratio_with_no_denominator_is_zero_not_an_error(db, sqlite
     sq.insert(
         db,
         "contact_events",
-        [{"event_id": 1, "debt_owner_id": 9, "result_id": 3, "agent_id": 1, "occurred_at": "2026-03-18 10:00:00"}],
+        [
+            {
+                "event_id": 1,
+                "debt_owner_id": 9,
+                "result_id": 3,
+                "agent_id": 1,
+                "occurred_at": "2026-03-18 10:00:00",
+            }
+        ],
     )
     row = next(
         r
@@ -250,7 +285,10 @@ def test_performance_over_all_lines_sums_counts_and_recomputes_ratios(cfg, db, s
     sql = queries.performance_table(cfg, ALL_LINES, DAY, TODAY, None).sql
     assert "SUM(agreement_count) * 100.0 / SUM(cpc_count)" in sql
     assert "GROUP BY agent_name" in sql
-    assert "SUM(agreement_count) * 100.0" not in queries.performance_table(cfg, "auto", DAY, TODAY, None).sql
+    assert (
+        "SUM(agreement_count) * 100.0"
+        not in queries.performance_table(cfg, "auto", DAY, TODAY, None).sql
+    )
 
     add_effort(db)
     both = {

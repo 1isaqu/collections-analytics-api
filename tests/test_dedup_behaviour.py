@@ -27,12 +27,22 @@ NEXT_DAY = "2026-03-19 09:00:00"
 def conn():
     connection = sq.connect()
     sq.with_agents(connection, (1, "Agent 01", "agent_01"))
-    sq.insert(connection, "agreement_debts", [{"agreement_id": 6001, "portfolio_id": 1, "debt_id": 1}])
+    sq.insert(
+        connection, "agreement_debts", [{"agreement_id": 6001, "portfolio_id": 1, "debt_id": 1}]
+    )
     sq.insert(connection, "debt_attributes", [{"debt_id": 1, "portfolio_label": "Portfolio A-01"}])
     sq.insert(
         connection,
         "debts",
-        [{"debt_id": 1, "portfolio_id": 1, "contract_no": "C1", "balance": 4000.0, "due_at": "2025-12-01"}],
+        [
+            {
+                "debt_id": 1,
+                "portfolio_id": 1,
+                "contract_no": "C1",
+                "balance": 4000.0,
+                "due_at": "2025-12-01",
+            }
+        ],
     )
     return connection
 
@@ -64,7 +74,9 @@ def test_the_latest_write_wins_and_the_row_id_breaks_a_tie(conn, sqlite_cfg):
         [
             sq.installment(row_id=1, agreement_id=6001, amount=1000.0),
             sq.installment(row_id=2, agreement_id=6001, amount=900.0),  # same timestamp, higher id
-            sq.installment(row_id=3, agreement_id=6001, amount=800.0, issued_at="2026-03-18 08:00:00"),
+            sq.installment(
+                row_id=3, agreement_id=6001, amount=800.0, issued_at="2026-03-18 08:00:00"
+            ),
         ],
     )
     assert agent_row(conn, sqlite_cfg)["agreement_value"] == 900.0
@@ -89,7 +101,10 @@ def test_a_rewrite_with_a_status_outside_every_set_does_not_hide_the_row(conn, s
         [
             sq.installment(row_id=1, agreement_id=6001, amount=1000.0),
             sq.installment(
-                row_id=2, agreement_id=6001, amount=1000.0, status_id=99,
+                row_id=2,
+                agreement_id=6001,
+                amount=1000.0,
+                status_id=99,
                 issued_at="2026-03-18 15:00:00",
             ),
         ],
@@ -118,7 +133,11 @@ def test_effectiveness_counts_a_duplicated_slip_once(conn, sqlite_cfg):
     ]
     sq.insert(conn, "agreements", rows)
     kpi, daily = effectiveness_queries.summary_queries(
-        sqlite_cfg, "auto", Period.between(TODAY.replace(day=1), TODAY.replace(day=31)), TODAY, "first"
+        sqlite_cfg,
+        "auto",
+        Period.between(TODAY.replace(day=1), TODAY.replace(day=31)),
+        TODAY,
+        "first",
     )
     assert sq.run(conn, kpi)[0]["slips_total"] == 1
     assert [d["slips_total"] for d in sq.run(conn, daily)] == [1]

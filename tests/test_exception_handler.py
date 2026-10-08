@@ -77,9 +77,14 @@ def test_unknown_path_and_wrong_method_use_the_envelope(make_app):
 
 def test_a_supplied_run_id_is_reflected_only_when_it_is_well_formed(make_app):
     client = build(make_app)
-    assert client.get("/health/live", headers={"X-Run-Id": "abc.DEF_1-2"}).headers["x-run-id"] == "abc.DEF_1-2"
-    assert client.get("/health/live", headers={"X-Request-Id": "req-7"}).headers["x-run-id"] == "req-7"
-    for bad in ("has space", "x" * 65, "semi;colon", "quote\""):
+    assert (
+        client.get("/health/live", headers={"X-Run-Id": "abc.DEF_1-2"}).headers["x-run-id"]
+        == "abc.DEF_1-2"
+    )
+    assert (
+        client.get("/health/live", headers={"X-Request-Id": "req-7"}).headers["x-run-id"] == "req-7"
+    )
+    for bad in ("has space", "x" * 65, "semi;colon", 'quote"'):
         reflected = client.get("/health/live", headers={"X-Run-Id": bad}).headers["x-run-id"]
         assert reflected != bad and reflected.startswith("srv-")
 
@@ -92,7 +97,9 @@ def test_every_response_carries_a_run_id_and_nosniff(make_app):
 
 def test_unhandled_errors_reach_the_event_log(tmp_path):
     log = tmp_path / "events.ndjson"
-    settings = Settings.from_env({"EFFECTIVENESS_ETL_ENABLED": "false", "TARGETS_DIR": str(tmp_path)})
+    settings = Settings.from_env(
+        {"EFFECTIVENESS_ETL_ENABLED": "false", "TARGETS_DIR": str(tmp_path)}
+    )
     app = create_app(
         settings,
         executor=_NoExecutor(),

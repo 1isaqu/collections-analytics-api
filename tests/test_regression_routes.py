@@ -41,7 +41,10 @@ def test_too_few_clean_points_give_an_empty_model_list(client):
 def test_the_body_must_have_points(client):
     assert client.post("/regression/agents", json={"points": []}).status_code == 422
     assert client.post("/regression/agents", json={}).status_code == 422
-    assert client.post("/regression/agents", json={"points": [{"efficiency": "abc"}]}).status_code == 422
+    assert (
+        client.post("/regression/agents", json={"points": [{"efficiency": "abc"}]}).status_code
+        == 422
+    )
 
 
 def test_get_is_not_allowed(client):
@@ -62,7 +65,9 @@ def padded(size):
 
 def test_a_body_over_the_byte_ceiling_is_refused_before_it_is_read(client_for):
     client = client_for({"REGRESSION_MAX_POINTS": "10"})  # 10 * 1024 bytes
-    response = client.post("/regression/agents", content=padded(12_000), headers={"Content-Type": "application/json"})
+    response = client.post(
+        "/regression/agents", content=padded(12_000), headers={"Content-Type": "application/json"}
+    )
     assert response.status_code == 413
     body = response.json()
     assert body["data"] == [] and "byte limit" in body["detail"] and body["meta"]["run_id"]
@@ -77,7 +82,9 @@ def test_a_chunked_body_is_cut_off_at_the_ceiling(client_for):
         for start in range(0, len(payload), 1000):
             yield payload[start : start + 1000]
 
-    response = client.post("/regression/agents", content=chunks(), headers={"Content-Type": "application/json"})
+    response = client.post(
+        "/regression/agents", content=chunks(), headers={"Content-Type": "application/json"}
+    )
     assert response.status_code == 413
 
 
@@ -89,5 +96,9 @@ def test_the_ceiling_does_not_apply_to_other_routes_or_to_reads(client_for):
 
 def test_the_api_alias_has_the_same_ceiling(client_for):
     client = client_for({"REGRESSION_MAX_POINTS": "10"})
-    response = client.post("/api/regression/agents", content=padded(12_000), headers={"Content-Type": "application/json"})
+    response = client.post(
+        "/api/regression/agents",
+        content=padded(12_000),
+        headers={"Content-Type": "application/json"},
+    )
     assert response.status_code == 413

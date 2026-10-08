@@ -110,13 +110,19 @@ def pdf_bytes(tmp_path):
 
 def upload(client, content, name="targets_3Q2026.pdf", **headers):
     return client.post(
-        "/dashboard/targets/upload", files={"file": (name, content, "application/pdf")}, headers=headers
+        "/dashboard/targets/upload",
+        files={"file": (name, content, "application/pdf")},
+        headers=headers,
     )
 
 
 def scratch_files(client):
     directory = client.app.state.ctx.targets.directory
-    return [p for p in directory.iterdir() if p.name.startswith("_upload_")] if directory.exists() else []
+    return (
+        [p for p in directory.iterdir() if p.name.startswith("_upload_")]
+        if directory.exists()
+        else []
+    )
 
 
 def test_a_valid_pdf_becomes_the_latest_targets(client_for, pdf_bytes):
@@ -148,7 +154,9 @@ def test_a_file_that_is_not_a_pdf_by_name_is_refused(client_for):
 
 def test_a_directory_in_the_file_name_is_ignored(client_for, pdf_bytes):
     response = upload(client_for(), pdf_bytes, name="../../elsewhere/targets_3Q2026.pdf")
-    assert response.status_code == 200 and response.json()["meta"]["sources"] == ["targets_3Q2026.pdf"]
+    assert response.status_code == 200 and response.json()["meta"]["sources"] == [
+        "targets_3Q2026.pdf"
+    ]
 
 
 def test_garbage_with_a_pdf_name_is_a_clear_error_and_leaves_no_scratch_file(client_for):

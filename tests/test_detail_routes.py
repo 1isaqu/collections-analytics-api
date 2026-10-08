@@ -8,8 +8,14 @@ from collections_api.domains.charts.details import DETAIL_KINDS
 
 KINDS = sorted(DETAIL_KINDS)
 DETAIL_ROW = {
-    "agreement_id": 1, "portfolio_id": 1, "first_installment_value": 100.0, "total_value": 300.0,
-    "agent_name": "Agent 01", "agreement_date": "2026-03-18", "due_date": "2026-03-25", "installment_count": 3,
+    "agreement_id": 1,
+    "portfolio_id": 1,
+    "first_installment_value": 100.0,
+    "total_value": 300.0,
+    "agent_name": "Agent 01",
+    "agreement_date": "2026-03-18",
+    "due_date": "2026-03-25",
+    "installment_count": 3,
 }
 
 
@@ -18,7 +24,11 @@ def test_one_portfolio(client_for, kind):
     client = client_for(answers={f"dashboard/{kind}-detail": [DETAIL_ROW]})
     body = client.get(f"/dashboard/{kind}-detail/auto/Portfolio A-01").json()
     assert body["data"] == [DETAIL_ROW]
-    assert body["meta"]["filters"] == {"line": "auto", "period": "today", "portfolio": "Portfolio A-01"}
+    assert body["meta"]["filters"] == {
+        "line": "auto",
+        "period": "today",
+        "portfolio": "Portfolio A-01",
+    }
     assert client.executor.calls[0]["params"] == ("Portfolio A-01",)
 
 

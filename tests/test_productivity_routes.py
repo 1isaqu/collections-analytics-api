@@ -59,7 +59,9 @@ def test_validation_counts_values_it_could_not_read():
 
 
 def test_validation_turns_numeric_strings_into_numbers_and_names_into_text():
-    rows, _ = validate_productivity_rows([productivity_row(agreement_value="12.5", agent_name=None)])
+    rows, _ = validate_productivity_rows(
+        [productivity_row(agreement_value="12.5", agent_name=None)]
+    )
     assert rows[0]["agreement_value"] == 12.5 and rows[0]["agent_name"] == ""
 
 
@@ -79,7 +81,12 @@ def test_productivity_returns_the_envelope_with_quality_facts(client_for):
     body = client.get("/dashboard/productivity/auto").json()
     assert [r["agent_name"] for r in body["data"]] == ["Agent 01", "Agent 02"]
     assert body["meta"]["sources"] == ["auto"]
-    assert body["meta"]["filters"] == {"line": "auto", "period": "today", "team": "all", "portfolio": None}
+    assert body["meta"]["filters"] == {
+        "line": "auto",
+        "period": "today",
+        "team": "all",
+        "portfolio": None,
+    }
     quality = body["meta"]["quality"]
     assert quality["rows"] == 2 and quality["numeric_cast_failures"] == 0
     assert quality["portfolio_partial"] is False and quality["elapsed_ms"] >= 0
@@ -105,7 +112,9 @@ def test_the_team_filter_narrows_rows_after_the_cached_query(client_for):
 def test_a_portfolio_filter_binds_the_label_and_nulls_the_ratios_that_need_all_effort(client_for):
     client = client_for(answers={"dashboard/productivity": TWO_AGENTS})
     body = client.get("/dashboard/productivity/auto", params={"portfolio": "Portfolio A-01"}).json()
-    assert all(r["cpc_rate_pct"] is None and r["agreements_per_attempt_pct"] is None for r in body["data"])
+    assert all(
+        r["cpc_rate_pct"] is None and r["agreements_per_attempt_pct"] is None for r in body["data"]
+    )
     assert body["data"][0]["agreement_count"] == 2  # counts and values stay
     assert body["meta"]["quality"]["portfolio_partial"] is True
     params = client.executor.calls[0]["params"]
@@ -114,7 +123,11 @@ def test_a_portfolio_filter_binds_the_label_and_nulls_the_ratios_that_need_all_e
 
 def test_unreadable_numbers_are_reported_not_hidden(client_for):
     rows = [productivity_row(agreement_value="n/a")]
-    body = client_for(answers={"dashboard/productivity": rows}).get("/dashboard/productivity/auto").json()
+    body = (
+        client_for(answers={"dashboard/productivity": rows})
+        .get("/dashboard/productivity/auto")
+        .json()
+    )
     assert body["data"][0]["agreement_value"] == 0.0
     assert body["meta"]["quality"]["numeric_cast_failures"] == 1
 
@@ -122,18 +135,27 @@ def test_unreadable_numbers_are_reported_not_hidden(client_for):
 def test_a_row_the_contract_does_not_allow_is_a_controlled_500(client_for):
     broken = productivity_row()
     del broken["agent_login"]
-    response = client_for(answers={"dashboard/productivity": [broken]}).get("/dashboard/productivity/auto")
+    response = client_for(answers={"dashboard/productivity": [broken]}).get(
+        "/dashboard/productivity/auto"
+    )
     assert response.status_code == 500
     assert "agent_login" in response.json()["detail"]
 
 
 def test_the_window_is_echoed_and_half_a_window_is_refused(client_for):
     client = client_for()
-    ok = client.get("/dashboard/productivity/auto", params={"date_from": "2026-03-01", "date_to": "2026-03-10"})
+    ok = client.get(
+        "/dashboard/productivity/auto", params={"date_from": "2026-03-01", "date_to": "2026-03-10"}
+    )
     assert ok.json()["meta"]["filters"]["period"] == "2026-03-01/2026-03-10"
     half = client.get("/dashboard/productivity/auto", params={"date_from": "2026-03-01"})
     assert half.status_code == 400
-    assert client.get("/dashboard/productivity/auto", params={"date_from": "soon", "date_to": "later"}).status_code == 422
+    assert (
+        client.get(
+            "/dashboard/productivity/auto", params={"date_from": "soon", "date_to": "later"}
+        ).status_code
+        == 422
+    )
 
 
 # ---------------------------------------------------------------- /load-status
@@ -156,12 +178,19 @@ def test_load_status_totals_each_line_and_adds_an_all_row(client_for):
     assert by_line["auto"]["agent_count"] == 2 and by_line["auto"]["attempt_count"] == 14
     assert by_line["all"]["attempt_count"] == 28 and by_line["all"]["agreement_value"] == 4000.0
     assert body["meta"]["quality"] == {
-        "status": "ok", "lines_requested": 2, "lines_ok": 2, "numeric_cast_failures": 0,
+        "status": "ok",
+        "lines_requested": 2,
+        "lines_ok": 2,
+        "numeric_cast_failures": 0,
     }
 
 
 def test_load_status_for_one_line_has_no_all_row(client_for):
-    body = client_for(answers={"dashboard/load-status": TWO_AGENTS}).get("/dashboard/load-status/auto").json()
+    body = (
+        client_for(answers={"dashboard/load-status": TWO_AGENTS})
+        .get("/dashboard/load-status/auto")
+        .json()
+    )
     assert [row["product_line"] for row in body["data"]] == ["auto"]
 
 
@@ -169,20 +198,28 @@ def test_a_failing_line_makes_the_status_partial_and_names_it(client_for):
     client = client_for(answers={"dashboard/load-status": failing_for("collections_consumer")})
     body = client.get("/dashboard/load-status/all").json()
     assert [row["product_line"] for row in body["data"]] == ["auto"]
-    assert body["errors"] == [{"source": "consumer", "message": "The query exceeded the database time limit."}]
+    assert body["errors"] == [
+        {"source": "consumer", "message": "The query exceeded the database time limit."}
+    ]
     assert body["meta"]["quality"]["status"] == "partial"
     assert body["meta"]["quality"]["lines_ok"] == 1
 
 
 def test_every_line_failing_is_an_error_not_an_empty_success(client_for):
     answer = ApiError(504, "The query exceeded the database time limit.")
-    response = client_for(answers={"dashboard/load-status": answer}).get("/dashboard/load-status/all")
+    response = client_for(answers={"dashboard/load-status": answer}).get(
+        "/dashboard/load-status/all"
+    )
     assert response.status_code == 500
 
 
 def test_load_status_reports_numbers_it_had_to_zero(client_for):
     rows = [productivity_row(attempt_count="many")]
-    body = client_for(answers={"dashboard/load-status": rows}).get("/dashboard/load-status/auto").json()
+    body = (
+        client_for(answers={"dashboard/load-status": rows})
+        .get("/dashboard/load-status/auto")
+        .json()
+    )
     assert body["meta"]["quality"]["status"] == "partial"
     assert body["meta"]["quality"]["numeric_cast_failures"] == 1
     assert "could not be read" in body["errors"][0]["message"]
@@ -192,7 +229,14 @@ def test_load_status_reports_numbers_it_had_to_zero(client_for):
 
 
 def test_agent_performance_passes_rows_through_and_caches_them(client_for):
-    rows = [{"product_line": "auto", "agent_name": "Agent 01", "agent_login": "agent_01", "attempt_count": 3}]
+    rows = [
+        {
+            "product_line": "auto",
+            "agent_name": "Agent 01",
+            "agent_login": "agent_01",
+            "attempt_count": 3,
+        }
+    ]
     client = client_for(answers={"dashboard/agent-performance": rows})
     first = client.get("/dashboard/agent-performance/all").json()
     client.get("/dashboard/agent-performance/all")
@@ -209,8 +253,12 @@ def test_agent_performance_passes_rows_through_and_caches_them(client_for):
 def benchmark_rows():
     return [
         {
-            "agent_login": f"agent_{i}", "agent_name": f"Agent {i}", "cpc_rate_pct": 10.0 * i,
-            "conversion_pct": 5.0 * i, "cash_effectiveness_pct": 20.0 * i, "exception_pct": None,
+            "agent_login": f"agent_{i}",
+            "agent_name": f"Agent {i}",
+            "cpc_rate_pct": 10.0 * i,
+            "conversion_pct": 5.0 * i,
+            "cash_effectiveness_pct": 20.0 * i,
+            "exception_pct": None,
             "active_days": 8,
         }
         for i in range(1, 6)
@@ -222,7 +270,13 @@ def test_benchmarks_summarise_the_agents_as_quartiles(client_for):
     body = client.get("/dashboard/benchmarks/auto").json()
     data = body["data"]
     assert data["agent_count"] == 5 and data["lookback_months"] == 3
-    assert data["cpc_rate_pct"] == {"q1": 20.0, "median": 30.0, "q3": 40.0, "top10_mean": 50.0, "mean": 30.0}
+    assert data["cpc_rate_pct"] == {
+        "q1": 20.0,
+        "median": 30.0,
+        "q3": 40.0,
+        "top10_mean": 50.0,
+        "mean": 30.0,
+    }
     assert data["exception_pct"]["median"] is None  # nobody had a value
     assert body["meta"]["total_rows"] == 1
 
@@ -271,14 +325,23 @@ def test_benchmark_rows_that_lack_a_metric_column_are_a_programming_error():
 
 def effort_row(login, name, attempts, answers, cpcs):
     return {
-        "agent_login": login, "agent_name": name,
-        "attempt_count": attempts, "answer_count": answers, "cpc_count": cpcs,
+        "agent_login": login,
+        "agent_name": name,
+        "attempt_count": attempts,
+        "answer_count": answers,
+        "cpc_count": cpcs,
     }
 
 
 LINE_ROWS = {
-    "collections_auto": [effort_row("agent_01", "Agent 01", 10, 6, 3), effort_row("agent_02", "Agent 02", 5, 2, 1)],
-    "collections_consumer": [effort_row("AGENT_01", "Agent 01", 7, 4, 2), effort_row("", "", 9, 9, 9)],
+    "collections_auto": [
+        effort_row("agent_01", "Agent 01", 10, 6, 3),
+        effort_row("agent_02", "Agent 02", 5, 2, 1),
+    ],
+    "collections_consumer": [
+        effort_row("AGENT_01", "Agent 01", 7, 4, 2),
+        effort_row("", "", 9, 9, 9),
+    ],
 }
 
 
@@ -293,7 +356,9 @@ class Clock:
 def effort_service(clock=None, ttl=60.0):
     executor = RecordingExecutor({"dashboard/agent-effort": lambda sql, db, params: LINE_ROWS[db]})
     cfg = QueryConfig.from_settings(Settings.defaults())
-    service = AgentEffortService(executor, cfg, ttl_seconds=ttl, today=lambda: TODAY, clock=clock or Clock())
+    service = AgentEffortService(
+        executor, cfg, ttl_seconds=ttl, today=lambda: TODAY, clock=clock or Clock()
+    )
     return service, executor
 
 
@@ -316,7 +381,10 @@ def test_a_row_with_neither_login_nor_name_is_dropped():
 def test_every_line_is_queried_once_per_computation():
     service, executor = effort_service()
     service.fetch()
-    assert sorted(call["database"] for call in executor.calls) == ["collections_auto", "collections_consumer"]
+    assert sorted(call["database"] for call in executor.calls) == [
+        "collections_auto",
+        "collections_consumer",
+    ]
 
 
 def test_the_payload_is_cached_until_it_expires_or_is_forced():

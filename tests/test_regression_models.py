@@ -35,7 +35,11 @@ def test_clean_points_of_a_tidy_set_removes_nothing():
     design, outcome, summary = models.clean_points(points())
     assert design.shape == (20, 5) and outcome.shape == (20,)
     assert (summary.raw_count, summary.clean_count) == (20, 20)
-    assert (summary.removed_nulls, summary.removed_duplicates, summary.removed_outliers) == (0, 0, 0)
+    assert (summary.removed_nulls, summary.removed_duplicates, summary.removed_outliers) == (
+        0,
+        0,
+        0,
+    )
 
 
 def test_points_with_a_missing_or_non_numeric_field_are_dropped_and_counted():
@@ -125,7 +129,12 @@ def test_the_log_model_fits_a_power_law_exactly():
 def test_the_multi_driver_models_name_their_drivers():
     by_id = fits()
     assert [c.name for c in by_id["volume"].coefficients] == ["attempts", "contacts"]
-    assert [c.name for c in by_id["full"].coefficients] == ["attempts", "contacts", "cpc", "conversion"]
+    assert [c.name for c in by_id["full"].coefficients] == [
+        "attempts",
+        "contacts",
+        "cpc",
+        "conversion",
+    ]
 
 
 def test_adjusted_r2_is_never_above_r2_for_a_noisy_model():
@@ -165,11 +174,29 @@ def test_a_zero_efficiency_does_not_break_the_log_model():
 def test_to_dict_is_json_ready_and_rounded():
     payload = models.to_dict(models.fit_all(points()), digits=3)
     assert payload["cleaning"] == {
-        "raw_count": 20, "clean_count": 20, "removed_nulls": 0, "removed_duplicates": 0, "removed_outliers": 0,
+        "raw_count": 20,
+        "clean_count": 20,
+        "removed_nulls": 0,
+        "removed_duplicates": 0,
+        "removed_outliers": 0,
     }
     simple = payload["models"][0]
-    assert simple["intercept"] == 3.0 and simple["coefficients"][0] == {"name": "x", "value": 2.0, "se": 0.0}
+    assert simple["intercept"] == 3.0 and simple["coefficients"][0] == {
+        "name": "x",
+        "value": 2.0,
+        "se": 0.0,
+    }
     assert set(simple) == {
-        "id", "label", "description", "drawable", "r2_train", "r2_test", "adj_r2",
-        "train_n", "test_n", "intercept", "intercept_se", "coefficients",
+        "id",
+        "label",
+        "description",
+        "drawable",
+        "r2_train",
+        "r2_test",
+        "adj_r2",
+        "train_n",
+        "test_n",
+        "intercept",
+        "intercept_se",
+        "coefficients",
     }

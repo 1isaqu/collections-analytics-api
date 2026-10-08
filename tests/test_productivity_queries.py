@@ -151,7 +151,15 @@ def test_agreements_are_counted_per_contract_in_a_separate_column(db, sqlite_cfg
     sq.insert(
         db,
         "debts",
-        [{"debt_id": 18, "portfolio_id": 1, "contract_no": "C18", "balance": 500.0, "due_at": "2025-12-01"}],
+        [
+            {
+                "debt_id": 18,
+                "portfolio_id": 1,
+                "contract_no": "C18",
+                "balance": 500.0,
+                "due_at": "2025-12-01",
+            }
+        ],
     )
     one = productivity(db, sqlite_cfg)["Agent 01"]
     assert one["agreement_count"] == 3  # the agreement grain does not change
@@ -160,8 +168,12 @@ def test_agreements_are_counted_per_contract_in_a_separate_column(db, sqlite_cfg
 
 def test_slips_count_installments_already_due_and_paid_inside_the_grace_period(db, sqlite_cfg):
     # Default grace is three days and every installment fell due on 2026-03-10.
-    db.execute("UPDATE agreements SET paid_amount = 500, paid_at = '2026-03-13 00:00:00' WHERE row_id = 3")
-    db.execute("UPDATE agreements SET paid_amount = 500, paid_at = '2026-03-14 00:00:00' WHERE row_id = 4")
+    db.execute(
+        "UPDATE agreements SET paid_amount = 500, paid_at = '2026-03-13 00:00:00' WHERE row_id = 3"
+    )
+    db.execute(
+        "UPDATE agreements SET paid_amount = 500, paid_at = '2026-03-14 00:00:00' WHERE row_id = 4"
+    )
     db.execute("UPDATE agreements SET due_at = '2026-04-01 00:00:00' WHERE row_id = 9")
     one = productivity(db, sqlite_cfg)["Agent 01"]
     assert one["slips_issued"] == 4  # the installment due next month is not a slip yet
@@ -208,7 +220,9 @@ def test_performance_counts_a_debt_owner_once_per_day(with_effort, sqlite_cfg):
 
 
 def test_performance_rows_carry_the_line_and_the_slip_ratio(with_effort, sqlite_cfg):
-    with_effort.execute("UPDATE agreements SET paid_amount = 500, paid_at = '2026-03-12 00:00:00' WHERE row_id = 3")
+    with_effort.execute(
+        "UPDATE agreements SET paid_amount = 500, paid_at = '2026-03-12 00:00:00' WHERE row_id = 3"
+    )
     rows = {r["agent_name"]: r for r in performance(with_effort, sqlite_cfg)}
     one = rows["Agent 01"]
     assert one["product_line"] == "auto"
@@ -254,10 +268,22 @@ def history(db, sqlite_cfg):
         db,
         "agreements",
         [
-            sq.installment(row_id=101, agreement_id=7001, amount=1000.0, paid_amount=400.0,
-                           issued_at="2026-03-10 09:00:00", due_at="2026-03-20 00:00:00"),
-            sq.installment(row_id=102, agreement_id=7002, amount=500.0, status_id=sq.PENDING_EXCEPTION,
-                           issued_at="2026-03-10 09:30:00", due_at="2026-03-20 00:00:00"),
+            sq.installment(
+                row_id=101,
+                agreement_id=7001,
+                amount=1000.0,
+                paid_amount=400.0,
+                issued_at="2026-03-10 09:00:00",
+                due_at="2026-03-20 00:00:00",
+            ),
+            sq.installment(
+                row_id=102,
+                agreement_id=7002,
+                amount=500.0,
+                status_id=sq.PENDING_EXCEPTION,
+                issued_at="2026-03-10 09:30:00",
+                due_at="2026-03-20 00:00:00",
+            ),
         ],
     )
     limits = {"benchmark_min_daily_attempts": 2, "benchmark_min_active_days": 2}

@@ -38,7 +38,10 @@ def test_ready_is_503_when_one_line_is_down_and_names_the_curated_reason(make_ap
     assert response.status_code == 503
     body = response.json()
     assert body["status"] == "degraded"
-    assert body["product_lines"] == {"auto": "ok", "consumer": "The query exceeded the database time limit."}
+    assert body["product_lines"] == {
+        "auto": "ok",
+        "consumer": "The query exceeded the database time limit.",
+    }
 
 
 def test_an_unexpected_probe_error_is_reported_without_its_message(make_app):

@@ -42,8 +42,12 @@ def slips(db, sqlite_cfg):
 
     def slip(row_id, agreement_id, due, amount, **extra):
         return sq.installment(
-            row_id=row_id, agreement_id=agreement_id, due_at=f"2026-03-{due} 00:00:00",
-            issued_at=issued, amount=amount, **extra,
+            row_id=row_id,
+            agreement_id=agreement_id,
+            due_at=f"2026-03-{due} 00:00:00",
+            issued_at=issued,
+            amount=amount,
+            **extra,
         )
 
     paid_on_time = {"paid_amount": 1000.0, "paid_at": "2026-03-12 00:00:00"}
@@ -128,12 +132,21 @@ def test_installment_kind_selects_the_down_payment_or_everything_after_it(cfg):
 
 
 def test_the_window_column_is_the_due_date_for_by_due_series_and_the_issue_date_otherwise(cfg):
-    assert "R.due_at >= CAST('20200101' AS DATE)" in queries.series_query(cfg, "auto", "monthly-later-by-due").sql
-    assert "R.issued_at >= CAST('20200101' AS DATE)" in queries.series_query(cfg, "auto", "monthly-first").sql
+    assert (
+        "R.due_at >= CAST('20200101' AS DATE)"
+        in queries.series_query(cfg, "auto", "monthly-later-by-due").sql
+    )
+    assert (
+        "R.issued_at >= CAST('20200101' AS DATE)"
+        in queries.series_query(cfg, "auto", "monthly-first").sql
+    )
 
 
 def test_only_the_by_due_agent_series_has_a_minimum_sample(cfg):
-    assert "HAVING COUNT(*) >= 8" in queries.series_query(cfg, "auto", "monthly-agent-later-by-due").sql
+    assert (
+        "HAVING COUNT(*) >= 8"
+        in queries.series_query(cfg, "auto", "monthly-agent-later-by-due").sql
+    )
     assert "HAVING" not in queries.series_query(cfg, "auto", "monthly-agent-first").sql
 
 
@@ -159,7 +172,11 @@ def test_the_portfolio_label_is_bound_once_per_line(cfg):
 
 
 def test_break_bands_follow_the_configured_edges():
-    assert queries.break_bands((7, 21)) == [("0-7 days", 0, 7), ("8-21 days", 8, 21), ("22+ days", 22, None)]
+    assert queries.break_bands((7, 21)) == [
+        ("0-7 days", 0, 7),
+        ("8-21 days", 8, 21),
+        ("22+ days", 22, None),
+    ]
     assert queries.break_bands((10,))[-1] == ("11+ days", 11, None)
 
 
@@ -197,7 +214,10 @@ def test_the_daily_series_has_one_point_per_due_day(slips):
     db, cfg = slips
     _, daily = run_summary(db, cfg)
     assert [(d["due_date"], d["slips_total"]) for d in daily] == [
-        ("2026-03-05", 1), ("2026-03-10", 3), ("2026-03-16", 1), ("2026-03-20", 1),
+        ("2026-03-05", 1),
+        ("2026-03-10", 3),
+        ("2026-03-16", 1),
+        ("2026-03-20", 1),
     ]
     assert sum(d["slips_total"] for d in daily) == 6
 
@@ -233,7 +253,11 @@ def test_the_excluded_agent_and_the_window_are_applied(slips):
 def test_a_window_with_no_slips_has_no_ratio_and_zero_sums(db, sqlite_cfg):
     empty = Period.between(TODAY.replace(month=5, day=1), TODAY.replace(month=5, day=31))
     kpi = sq.run(db, queries.summary_queries(sqlite_cfg, "auto", empty, TODAY, "first")[0])[0]
-    assert kpi["slips_total"] == 0 and kpi["conversion_pct"] is None and kpi["effectiveness_pct"] is None
+    assert (
+        kpi["slips_total"] == 0
+        and kpi["conversion_pct"] is None
+        and kpi["effectiveness_pct"] is None
+    )
     assert kpi["amount_maturing"] == 0
 
 
@@ -243,20 +267,39 @@ def test_a_window_with_no_slips_has_no_ratio_and_zero_sums(db, sqlite_cfg):
 def test_the_daily_series_groups_by_issue_day(slips):
     db, cfg = slips
     rows = sq.run(db, queries.series_query(cfg, "auto", "daily-first"))
-    assert rows == [{"issue_date": "2026-03-01", "slips_issued": 6, "slips_paid_in_grace": 1, "conversion_pct": 17}]
+    assert rows == [
+        {
+            "issue_date": "2026-03-01",
+            "slips_issued": 6,
+            "slips_paid_in_grace": 1,
+            "conversion_pct": 17,
+        }
+    ]
 
 
 def test_the_monthly_series_rounds_the_ratio_to_a_whole_percent(slips):
     db, cfg = slips
-    db.execute("UPDATE agreements SET paid_amount = 600, paid_at = '2026-03-17 00:00:00' WHERE agreement_id = 9003")
+    db.execute(
+        "UPDATE agreements SET paid_amount = 600, paid_at = '2026-03-17 00:00:00' WHERE agreement_id = 9003"
+    )
     rows = sq.run(db, queries.series_query(cfg, "auto", "monthly-first"))
-    assert rows == [{"year": 2026, "month": 3, "slips_issued": 6, "slips_paid_in_grace": 2, "conversion_pct": 33}]
+    assert rows == [
+        {
+            "year": 2026,
+            "month": 3,
+            "slips_issued": 6,
+            "slips_paid_in_grace": 2,
+            "conversion_pct": 33,
+        }
+    ]
 
 
 def test_the_by_due_series_groups_by_due_day(slips):
     db, cfg = slips
     rows = sq.run(db, queries.series_query(cfg, "auto", "daily-later-by-due"))
-    assert rows == [{"due_date": "2026-03-25", "slips_issued": 1, "slips_paid_in_grace": 0, "conversion_pct": 0}]
+    assert rows == [
+        {"due_date": "2026-03-25", "slips_issued": 1, "slips_paid_in_grace": 0, "conversion_pct": 0}
+    ]
 
 
 def test_the_agent_series_leaves_out_the_excluded_agent(slips):
@@ -291,7 +334,12 @@ def test_the_break_curve_bands_slips_by_days_since_the_due_date(slips):
     # reads slips whoever made the agreement, so the excluded agent's 9007 is in.
     rows = sq.run(db, queries.break_curve_query(cfg, "auto", MARCH, TODAY))
     by_band = {r["band"]: r for r in rows}
-    assert by_band["0-7 days"] == {"band": "0-7 days", "slips_total": 1, "slips_broken": 0, "break_rate_pct": 0.0}
+    assert by_band["0-7 days"] == {
+        "band": "0-7 days",
+        "slips_total": 1,
+        "slips_broken": 0,
+        "break_rate_pct": 0.0,
+    }
     assert by_band["8-21 days"]["slips_total"] == 5 and by_band["8-21 days"]["slips_broken"] == 1
     assert by_band["8-21 days"]["break_rate_pct"] == 20.0
     assert [r["band"] for r in rows] == ["0-7 days", "8-21 days"]  # bands without slips are absent

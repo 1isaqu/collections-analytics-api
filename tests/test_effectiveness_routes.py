@@ -7,7 +7,12 @@ import pytest
 from collections_api.api.routers.effectiveness import normalize_kpis, pick_days
 from collections_api.domains.effectiveness import queries
 
-SERIES_ROW = {"issue_date": "2026-03-01", "slips_issued": 2, "slips_paid_in_grace": 1, "conversion_pct": 50}
+SERIES_ROW = {
+    "issue_date": "2026-03-01",
+    "slips_issued": 2,
+    "slips_paid_in_grace": 1,
+    "conversion_pct": 50,
+}
 WINDOW = {"date_from": "2026-03-01", "date_to": "2026-03-31"}
 
 
@@ -49,7 +54,10 @@ def test_a_series_is_served_from_memory_after_a_refresh(client_for):
 def test_a_series_defaults_to_every_line_and_refuses_an_unknown_one(client_for):
     client = client_for(answers={"effectiveness-refresh": [SERIES_ROW]})
     client.app.state.ctx.effectiveness.refresh()
-    assert client.get("/effectiveness/monthly-first").json()["meta"]["sources"] == ["auto", "consumer"]
+    assert client.get("/effectiveness/monthly-first").json()["meta"]["sources"] == [
+        "auto",
+        "consumer",
+    ]
     assert client.get("/effectiveness/monthly-first", params={"line": "nowhere"}).status_code == 400
 
 
@@ -65,7 +73,13 @@ def test_kpis_default_counts_to_zero_and_leave_ratios_undefined():
 
 
 def test_the_best_and_worst_day_ignore_days_without_slips_or_without_a_ratio():
-    days = [day("03-01", 3, 50.0), day("03-02", 0, 99.0), day("03-03", 2, None), day("03-04", 5, 10.0), day("03-05", 1, 90.0)]
+    days = [
+        day("03-01", 3, 50.0),
+        day("03-02", 0, 99.0),
+        day("03-03", 2, None),
+        day("03-04", 5, 10.0),
+        day("03-05", 1, 90.0),
+    ]
     best, worst = pick_days(days)
     assert best["due_date"] == "03-05" and worst["due_date"] == "03-04"
     assert pick_days([]) == (None, None)
@@ -80,10 +94,16 @@ def test_summary_returns_kpis_the_daily_series_and_the_extreme_days(client_for):
     body = client.get("/effectiveness/summary", params=WINDOW).json()
     data = body["data"]
     assert data["kpis"]["slips_total"] == 4 and data["daily"] == daily
-    assert data["best_day"]["due_date"] == "2026-03-03" and data["worst_day"]["due_date"] == "2026-03-02"
+    assert (
+        data["best_day"]["due_date"] == "2026-03-03"
+        and data["worst_day"]["due_date"] == "2026-03-02"
+    )
     assert body["meta"]["total_rows"] == 1
     assert body["meta"]["filters"] == {
-        "line": "all", "period": "2026-03-01/2026-03-31", "installment_type": "first", "portfolio_id": None,
+        "line": "all",
+        "period": "2026-03-01/2026-03-31",
+        "installment_type": "first",
+        "portfolio_id": None,
     }
 
 
@@ -95,7 +115,9 @@ def test_summary_of_an_empty_window_is_zeros_not_an_error(client_for):
 
 def test_summary_passes_the_portfolio_id_and_the_installment_type_to_the_query(client_for):
     client = client_for()
-    client.get("/effectiveness/summary", params={**WINDOW, "portfolio_id": 3, "installment_type": "later"})
+    client.get(
+        "/effectiveness/summary", params={**WINDOW, "portfolio_id": 3, "installment_type": "later"}
+    )
     sql = client.executor.calls[0]["sql"]
     assert "R.portfolio_id = 3" in sql and "installment_no > 0" in sql
 
@@ -170,9 +192,17 @@ def test_break_curve(client_for):
 
 
 def test_portfolio_summary_binds_the_label_once_per_line(client_for):
-    row = {"slips_total": 2, "slips_paid_in_grace": 1, "amount_maturing": 10.0, "amount_received": 5.0, "effectiveness_pct": 50.0}
+    row = {
+        "slips_total": 2,
+        "slips_paid_in_grace": 1,
+        "amount_maturing": 10.0,
+        "amount_received": 5.0,
+        "effectiveness_pct": 50.0,
+    }
     client = client_for(answers={"effectiveness/portfolio-summary": [row]})
-    body = client.get("/effectiveness/portfolio-summary", params={**WINDOW, "portfolio": "Portfolio A-01"}).json()
+    body = client.get(
+        "/effectiveness/portfolio-summary", params={**WINDOW, "portfolio": "Portfolio A-01"}
+    ).json()
     assert body["data"] == [row] and body["meta"]["filters"]["portfolio"] == "Portfolio A-01"
     assert client.executor.calls[0]["params"] == ("Portfolio A-01", "Portfolio A-01")
     assert client.get("/effectiveness/portfolio-summary", params=WINDOW).status_code == 422
@@ -180,7 +210,9 @@ def test_portfolio_summary_binds_the_label_once_per_line(client_for):
 
 def test_portfolio_ranking_and_generation_ranking(client_for):
     ranking = [{"portfolio_label": "Portfolio A-01", "slips_total": 1}]
-    generation = [{"portfolio_label": "Portfolio A-01", "agreement_count": 1, "agreement_value": 10.0}]
+    generation = [
+        {"portfolio_label": "Portfolio A-01", "agreement_count": 1, "agreement_value": 10.0}
+    ]
     client = client_for(
         answers={
             "effectiveness/portfolio-ranking": ranking,
@@ -197,4 +229,7 @@ def test_a_reversed_window_is_swapped_and_an_unknown_line_is_refused(client):
     reversed_window = {"date_from": "2026-03-31", "date_to": "2026-03-01"}
     body = client.get("/effectiveness/break-curve", params=reversed_window).json()
     assert body["meta"]["filters"]["period"] == "2026-03-01/2026-03-31"
-    assert client.get("/effectiveness/break-curve", params={**WINDOW, "line": "nowhere"}).status_code == 400
+    assert (
+        client.get("/effectiveness/break-curve", params={**WINDOW, "line": "nowhere"}).status_code
+        == 400
+    )
