@@ -83,7 +83,7 @@ def parse_number(raw: str | None, thousands: str = ",") -> float | None:
     if raw is None:
         return None
     text = str(raw).strip().replace(" ", "")
-    if text in ("", "-", "—", "–", "N/A", "n/a"):
+    if text in ("", "-", "\u2014", "\u2013", "N/A", "n/a"):  # hyphen, em dash, en dash
         return None
     text = text.replace(".", "").replace(",", ".") if thousands == "." else text.replace(",", "")
     try:

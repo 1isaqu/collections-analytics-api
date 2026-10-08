@@ -6,9 +6,9 @@ would type). ``Settings.from_env`` walks that table, so the defaults, the parsin
 the list of variable names cannot drift apart. A test checks that every variable in
 the table is documented in ``.env.example`` and ``docs/configuration.md``.
 
-All defaults are invented. Anything that was calibrated on real data in the system
-this was modelled on (grace days, band edges, minimum sample sizes, agent patterns)
-is a plain setting here and must be calibrated on your own data.
+All defaults are invented placeholders. Values that depend on the operation (grace days,
+band edges, minimum sample sizes, agent patterns) are plain settings, and they must be
+calibrated on your own data.
 """
 
 from __future__ import annotations

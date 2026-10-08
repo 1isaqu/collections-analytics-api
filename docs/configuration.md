@@ -2,7 +2,7 @@
 
 Every setting is an environment variable. A `.env` file in the working directory is read when the service starts through `python -m collections_api`; real environment variables win over it. `.env.example` lists all of them with placeholder values.
 
-Every default below is invented. Several of them (grace days, band edges, minimum sample sizes, agent patterns) were calibrated on real data in the system this project was modelled on. Calibrate them on yours before trusting a number.
+Every default below is an invented placeholder. Several of them (grace days, band edges, minimum sample sizes, agent patterns) depend on the operation, so calibrate them on your own data before trusting a number.
 
 Invalid values stop the service at start-up with a message that names the variable.
 

@@ -12,7 +12,7 @@ class RateLimiter:
     """At most ``limit`` hits per ``window`` seconds for each key.
 
     The bucket map is pruned once it passes ``max_buckets``: without that, every
-    distinct (client, key) pair would stay in memory for the life of the process.
+    distinct caller key would stay in memory for the life of the process.
     """
 
     def __init__(
