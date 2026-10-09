@@ -1,9 +1,9 @@
 """Extract a targets table from a PDF by word position.
 
-The documents this was written for have no detectable table grid, so the extractor
-works from words and their coordinates (what ``pdfplumber`` returns from
-``extract_words``). The header row fixes the x position of every column; each word on
-the following lines goes to the nearest column by its horizontal centre.
+A targets document may have no detectable table grid, so the extractor works from
+words and their coordinates (what ``pdfplumber`` returns from ``extract_words``). The
+header row fixes the x position of every column; each word on the following lines goes to
+the nearest column by its horizontal centre.
 
 Expected layout, left to right (the 16 columns are configurable only by editing
 ``Layout``): office, portfolio, group, headcount, then four metrics with one column per
@@ -61,8 +61,8 @@ class Layout:
 def detect_thousands(rows: Sequence[Sequence[str]]) -> str:
     """Thousands separator of the document: ``,`` or ``.``.
 
-    Documents of different periods have used both. A value of a million or more has two
-    separators and settles it; with none, the comma convention is assumed.
+    A document may use either convention. A value of a million or more settles it, because
+    it has two separators; with no such value, the comma convention is assumed.
     """
     for row in rows:
         for cell in row:
@@ -77,7 +77,7 @@ def detect_thousands(rows: Sequence[Sequence[str]]) -> str:
 def parse_number(raw: str | None, thousands: str = ",") -> float | None:
     """Number from a cell. Blank, dash and ``N/A`` are ``None``.
 
-    The PDF text layer sometimes splits a number with a space ("1 46,411"); spaces are
+    The PDF text layer sometimes splits a number with a space ("1 23,456"); spaces are
     removed before parsing.
     """
     if raw is None:

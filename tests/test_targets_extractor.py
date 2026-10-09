@@ -32,7 +32,7 @@ def edited(row, **cells):
     ("raw", "thousands", "expected"),
     [
         ("1,500", ",", 1500.0),
-        ("1 46,411", ",", 146411.0),  # the text layer sometimes splits a number
+        ("1 23,456", ",", 123456.0),  # the text layer sometimes splits a number
         ("1.234,50", ".", 1234.5),
         ("12", ",", 12.0),
         ("-", ",", None),
