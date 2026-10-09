@@ -2,7 +2,7 @@
 
 This repository contains no data. It ships code that reads a database you provide. This page
 lists every place a number or a row comes from, grouped into tiers by how far you can trust
-and reproduce it. Last reviewed on 2026-10-08.
+and reproduce it. Last reviewed on 2026-10-09.
 
 | Tier | What it is | In this repository |
 |---|---|---|
@@ -63,10 +63,12 @@ being collected from, so your tables need not expose them.
 
 Every default in `settings.py` is arbitrary and was picked so the examples run: the grace
 days, the break-curve band edges, the minimum sample sizes, the agent exclusion patterns, the
-status ids, the cache and rate-limit numbers, the row caps. None comes from a public source
-and none was calibrated on data. The right values depend on how your operation records its
-work. Calibrate them on your own data, and do not read a number the service returns with the
-defaults as a finding.
+status ids, the row caps, and the operational numbers (query timeout, pool size and
+connection age, cache lifetimes and entry ceiling, rate limit). The operational ones are
+small round numbers, not measurements of any load. None comes from a public source and none
+was calibrated on data. The right values depend on how your operation records its work and
+on how much traffic you serve. Calibrate them on your own data, and do not read a number the
+service returns with the defaults as a finding.
 
 The examples in the README and in [api-contract.md](api-contract.md) use invented rows.
 `docs/openapi.json` and `docs/api-contract.md` are generated from the code and contain no

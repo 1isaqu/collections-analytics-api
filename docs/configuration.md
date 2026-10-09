@@ -19,13 +19,13 @@ Invalid values stop the service at start-up with a message that names the variab
 | `DB_PASSWORD` | (empty) | Database password. Required for any route that reads data. Never logged. |
 | `DB_TRUST_SERVER_CERT` | `false` | Maps to `TrustServerCertificate`. Leave off outside a lab. |
 | `DB_CONNECT_TIMEOUT` | `10` | Login timeout in seconds. |
-| `DB_QUERY_TIMEOUT` | `60` | Statement timeout in seconds. A timeout surfaces as HTTP 504. |
-| `DB_POOL_SIZE` | `6` | Idle connections kept per database. The pool never blocks: it opens extra connections under load and closes the surplus when they come back. |
-| `DB_POOL_MAX_AGE_SECONDS` | `1800` | Idle connections older than this are closed instead of reused. |
-| `CACHE_TTL_SECONDS` | `60` | TTL of the response-row cache. `0` disables caching (concurrent identical requests still share one query). |
-| `CACHE_MAX_ENTRIES` | `500` | Hard ceiling on cache entries. Keys contain client text, so the store has to be bounded. |
-| `BENCHMARKS_CACHE_TTL_SECONDS` | `1800` | Separate TTL for the benchmarks route, which scans months of contact events. |
-| `AGENT_EFFORT_CACHE_TTL_SECONDS` | `60` | TTL of the consolidated agent-effort route. |
+| `DB_QUERY_TIMEOUT` | `45` | Statement timeout in seconds. A timeout surfaces as HTTP 504. |
+| `DB_POOL_SIZE` | `4` | Idle connections kept per database. The pool never blocks: it opens extra connections under load and closes the surplus when they come back. |
+| `DB_POOL_MAX_AGE_SECONDS` | `900` | Idle connections older than this are closed instead of reused. |
+| `CACHE_TTL_SECONDS` | `30` | TTL of the response-row cache. `0` disables caching (concurrent identical requests still share one query). |
+| `CACHE_MAX_ENTRIES` | `256` | Hard ceiling on cache entries. Keys contain client text, so the store has to be bounded. |
+| `BENCHMARKS_CACHE_TTL_SECONDS` | `600` | Separate TTL for the benchmarks route, which scans months of contact events. |
+| `AGENT_EFFORT_CACHE_TTL_SECONDS` | `45` | TTL of the consolidated agent-effort route. |
 | `REQUIRE_API_AUTH` | `false` | Require `X-API-Key` and `Authorization: Bearer` on every protected route. |
 | `API_KEY` | (empty) | Expected `X-API-Key`. Needed when auth is required. |
 | `API_TOKEN` | (empty) | Expected bearer token. Needed when auth is required. |
