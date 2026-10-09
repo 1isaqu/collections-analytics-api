@@ -8,7 +8,7 @@ from typing import Any
 
 import numpy as np
 
-# Benchmark metric -> column of ``benchmark_query`` it summarises.
+# Benchmark metric -> column of ``benchmark_query`` it summarizes.
 METRICS = ("cpc_rate_pct", "conversion_pct", "cash_effectiveness_pct", "exception_pct")
 EMPTY = {"q1": None, "median": None, "q3": None, "top10_mean": None, "mean": None}
 

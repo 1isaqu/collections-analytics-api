@@ -423,8 +423,8 @@ def test_a_blank_label_counts_as_no_label(sqlite_cfg, period):
         7101: "Portfolio A-01",
         7102: None,
     }
-    unlabelled = sq.run(conn, queries.exceptions_without_portfolio(sqlite_cfg, "auto", period))
-    assert [r["agreement_id"] for r in unlabelled] == [7102]
+    unlabeled = sq.run(conn, queries.exceptions_without_portfolio(sqlite_cfg, "auto", period))
+    assert [r["agreement_id"] for r in unlabeled] == [7102]
 
 
 def test_detail_by_agent(db, sqlite_cfg, period):
