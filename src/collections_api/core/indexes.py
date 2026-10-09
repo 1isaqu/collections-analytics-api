@@ -3,7 +3,8 @@
 This is the only code path in the service that writes to the database, and it is
 gated twice: ``ENABLE_INDEX_ADMIN`` must be on, and ``dry_run`` defaults to true. The
 index list is written against the tables of the data contract; adjust it if your
-physical schema differs.
+physical schema differs. It lists only columns the contract requires, and SQL Server
+cannot create these indexes on a plain view, so the route needs base tables.
 """
 
 from __future__ import annotations
@@ -116,7 +117,7 @@ RECOMMENDED_INDEXES: tuple[IndexSpec, ...] = (
         "ix_contact_events_occurred_at",
         "contact_events",
         ("occurred_at",),
-        ("agent_id", "result_id", "debt_owner_id", "event_id"),
+        ("agent_id", "result_id", "debt_owner_id"),
         "Outreach attempts in a window (productivity and benchmarks).",
     ),
     IndexSpec(
