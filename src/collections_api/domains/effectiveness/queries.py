@@ -367,7 +367,7 @@ SELECT T.agreement_id,
         FROM {cfg.table(database, "agreement_debts", "RD2")}
         JOIN {cfg.table(database, "debt_attributes", "DA2")} ON RD2.debt_id = DA2.debt_id
         WHERE RD2.agreement_id = T.agreement_id AND RD2.portfolio_id = T.portfolio_id
-          AND DA2.portfolio_label IS NOT NULL
+          AND DA2.portfolio_label IS NOT NULL AND LTRIM(RTRIM(DA2.portfolio_label)) <> ''
         ORDER BY DA2.portfolio_label) AS portfolio_label,
        (SELECT SUM(DM.balance)
         FROM {cfg.table(database, "agreement_debts", "RD")}

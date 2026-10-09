@@ -100,7 +100,7 @@ def _label_map(cfg: QueryConfig, database: str, candidates: str) -> str:
                ) AS prn
         FROM {cfg.table(database, "agreement_debts", "RD")}
         JOIN {cfg.table(database, "debt_attributes", "DA2")} ON DA2.debt_id = RD.debt_id
-        WHERE DA2.portfolio_label IS NOT NULL
+        WHERE DA2.portfolio_label IS NOT NULL AND LTRIM(RTRIM(DA2.portfolio_label)) <> ''
           AND EXISTS (
               SELECT 1 FROM ({candidates}) AS CN
               WHERE CN.agreement_id = RD.agreement_id AND CN.portfolio_id = RD.portfolio_id

@@ -292,6 +292,7 @@ WHERE R.rn = 1
           WHERE RD.agreement_id = R.agreement_id
             AND RD.portfolio_id = R.portfolio_id
             AND DA2.portfolio_label IS NOT NULL
+            AND LTRIM(RTRIM(DA2.portfolio_label)) <> ''
       )"""
         return Query(sql)
 

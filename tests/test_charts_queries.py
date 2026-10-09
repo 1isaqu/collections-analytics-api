@@ -386,6 +386,47 @@ def test_an_agreement_with_two_labels_is_listed_where_the_chart_counts_it(sqlite
     ]
 
 
+def test_a_blank_label_counts_as_no_label(sqlite_cfg, period):
+    conn = sq.connect()
+    sq.with_agents(conn, (1, "Agent 01", "agent_01"))
+    sq.insert(
+        conn,
+        "agreements",
+        [
+            sq.installment(
+                row_id=1, agreement_id=7101, amount=500.0, status_id=sq.PENDING_EXCEPTION
+            ),
+            sq.installment(
+                row_id=2, agreement_id=7102, amount=300.0, status_id=sq.PENDING_EXCEPTION
+            ),
+        ],
+    )
+    # 7101 has a blank and a named debt; 7102 only blank ones. Blanks sort before names.
+    links = [(7101, 81), (7101, 82), (7102, 83), (7102, 84)]
+    sq.insert(
+        conn,
+        "agreement_debts",
+        [{"agreement_id": a, "portfolio_id": 1, "debt_id": d} for a, d in links],
+    )
+    labels = {81: "", 82: "Portfolio A-01", 83: "   ", 84: ""}
+    sq.insert(
+        conn, "debt_attributes", [{"debt_id": d, "portfolio_label": v} for d, v in labels.items()]
+    )
+    chart = run(conn, sqlite_cfg, queries.by_portfolio, "auto", period, "exceptions")
+    assert [(r["portfolio_label"], r["exception_count"]) for r in chart] == [("Portfolio A-01", 1)]
+    listed = run(
+        conn, sqlite_cfg, details.by_portfolio, "auto", period, "exceptions", "Portfolio A-01"
+    )
+    assert [r["agreement_id"] for r in listed] == [7101]
+    everything = run(conn, sqlite_cfg, details.all_portfolios, "auto", period, "exceptions")
+    assert {r["agreement_id"]: r["portfolio_label"] for r in everything} == {
+        7101: "Portfolio A-01",
+        7102: None,
+    }
+    unlabelled = sq.run(conn, queries.exceptions_without_portfolio(sqlite_cfg, "auto", period))
+    assert [r["agreement_id"] for r in unlabelled] == [7102]
+
+
 def test_detail_by_agent(db, sqlite_cfg, period):
     rows = run(db, sqlite_cfg, details.by_agent, "auto", period, "exceptions", "Agent 02")
     assert sorted(r["agreement_id"] for r in rows) == [5002, 5007]

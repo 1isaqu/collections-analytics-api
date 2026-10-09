@@ -252,9 +252,10 @@ class QueryConfig:
         multiply rows when an agreement covers several debts). ``outer=True`` uses
         ``OUTER APPLY`` so agreements without a label stay in the result with a null.
         The match uses the pair (agreement_id, portfolio_id): an agreement number can
-        exist in more than one portfolio. When the debts carry different labels, the one
-        that sorts first wins. The ``ORDER BY`` makes the pick repeatable, and the detail
-        lists (``domains/charts/details.py``) apply the same rule.
+        exist in more than one portfolio. Null and blank labels are skipped. When the debts
+        carry different labels, the one that sorts first wins. The ``ORDER BY`` makes the
+        pick repeatable, and the detail lists (``domains/charts/details.py``) apply the
+        same rule.
         """
         apply_kind = "OUTER" if outer else "CROSS"
         return (
@@ -266,6 +267,7 @@ class QueryConfig:
             f"    WHERE RD.agreement_id = {agreement_alias}.agreement_id\n"
             f"      AND RD.portfolio_id = {agreement_alias}.portfolio_id\n"
             "      AND DA2.portfolio_label IS NOT NULL\n"
+            "      AND LTRIM(RTRIM(DA2.portfolio_label)) <> ''\n"
             "    ORDER BY DA2.portfolio_label\n"
             ") DA"
         )
