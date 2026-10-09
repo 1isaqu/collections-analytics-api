@@ -281,12 +281,6 @@ Runs `SELECT 1` against one product line. 503 if it fails.
 
 **503**: The line is down. Body: the error body.
 
-**422**: Validation Error Body `HTTPValidationError`:
-
-| Field | Type | Always present | Description |
-|---|---|---|---|
-| `detail` | list of [`ValidationError`](#validationerror) | no |  |
-
 ## Agreements
 
 Agreement lists, performance table, portfolio labels.
