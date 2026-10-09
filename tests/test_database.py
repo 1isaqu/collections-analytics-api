@@ -131,6 +131,7 @@ def test_connect_failure_maps_to_500_without_the_driver_message():
         with pool.connection("db_a"):
             pass
     assert caught.value.status_code == 500
+    assert caught.value.detail == "Could not connect to the database."
     assert "secret" not in caught.value.detail
 
 
