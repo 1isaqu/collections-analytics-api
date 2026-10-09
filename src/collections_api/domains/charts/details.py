@@ -10,7 +10,9 @@ month-long windows across all portfolios.
 The portfolio label is resolved with a ``ROW_NUMBER`` subquery and a join here, not
 ``CROSS APPLY``. The subquery already reduces the label to at most one row per
 agreement, so the join cannot multiply rows, and the apply form re-ran the lookup per
-row even when restricted to the qualifying set.
+row even when restricted to the qualifying set. The pick rule is the one the charts use
+(the label that sorts first), so a list for one portfolio holds the agreements the chart
+counts under that portfolio. A test with two labels on one agreement pins this.
 
 No debtor identity or staff registration code is returned.
 """
@@ -80,23 +82,25 @@ LEFT JOIN (
 ) AS AGG ON AGG.agreement_id = R.agreement_id AND AGG.portfolio_id = R.portfolio_id"""
 
 
-def _label_map(cfg: QueryConfig, database: str, candidates: str, label_where: str) -> str:
+def _label_map(cfg: QueryConfig, database: str, candidates: str) -> str:
     """One portfolio label per qualifying agreement.
 
-    ``label_where`` is ``= ?`` (the caller joins, which turns it into a filter) or
-    ``IS NOT NULL`` (the caller left-joins, which turns it into an enrichment). When an
-    agreement's debts carry several labels, an arbitrary one is picked.
+    The label is picked before any filtering on it, with the rule of
+    ``QueryConfig.portfolio_label_lookup``: when an agreement's debts carry several
+    labels, the one that sorts first wins. Filtering inside this subquery would match an
+    agreement under every label it has, and the portfolio list would disagree with the
+    portfolio chart. The caller filters on ``PM.portfolio_label`` instead.
     """
     return f"""(
     SELECT PC.agreement_id, PC.portfolio_id, PC.portfolio_label
     FROM (
         SELECT RD.agreement_id, RD.portfolio_id, DA2.portfolio_label,
                ROW_NUMBER() OVER (
-                   PARTITION BY RD.agreement_id, RD.portfolio_id ORDER BY (SELECT NULL)
+                   PARTITION BY RD.agreement_id, RD.portfolio_id ORDER BY DA2.portfolio_label
                ) AS prn
         FROM {cfg.table(database, "agreement_debts", "RD")}
         JOIN {cfg.table(database, "debt_attributes", "DA2")} ON DA2.debt_id = RD.debt_id
-        WHERE DA2.portfolio_label {label_where}
+        WHERE DA2.portfolio_label IS NOT NULL
           AND EXISTS (
               SELECT 1 FROM ({candidates}) AS CN
               WHERE CN.agreement_id = RD.agreement_id AND CN.portfolio_id = RD.portfolio_id
@@ -130,11 +134,12 @@ def by_portfolio(cfg: QueryConfig, line: str, period: Period, kind: str, portfol
 SELECT {_select_columns(False)}
 FROM {cfg.dedup(database, "R", extra)} AS R
 JOIN {cfg.table(database, "agents", "U")} ON R.agent_id = U.agent_id
-JOIN {_label_map(cfg, database, candidates, "= ?")} AS PM
+JOIN {_label_map(cfg, database, candidates)} AS PM
     ON PM.agreement_id = R.agreement_id AND PM.portfolio_id = R.portfolio_id
 {_totals_join(cfg, database, candidates)}
 WHERE R.rn = 1
-      {cfg.excluded_agents()}"""
+      {cfg.excluded_agents()}
+      AND PM.portfolio_label = ?"""
         return Query(sql, (portfolio,))
 
     return list_lines(cfg, line, base, columns=DETAIL_COLUMNS, order_by=_ORDER)
@@ -170,7 +175,7 @@ SELECT {_select_columns(True)}
 FROM {cfg.dedup(database, "R", extra)} AS R
 JOIN {cfg.table(database, "agents", "U")} ON R.agent_id = U.agent_id
 {_totals_join(cfg, database, candidates)}
-LEFT JOIN {_label_map(cfg, database, candidates, "IS NOT NULL")} AS PM
+LEFT JOIN {_label_map(cfg, database, candidates)} AS PM
     ON PM.agreement_id = R.agreement_id AND PM.portfolio_id = R.portfolio_id
 WHERE R.rn = 1
       {cfg.excluded_agents()}"""

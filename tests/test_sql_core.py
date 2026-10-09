@@ -124,6 +124,7 @@ def test_portfolio_lookup_matches_on_the_composite_key(cfg):
     assert sql.startswith("CROSS APPLY")
     assert "RD.agreement_id = R.agreement_id" in sql and "RD.portfolio_id = R.portfolio_id" in sql
     assert "DA2.portfolio_label IS NOT NULL" in sql
+    assert "ORDER BY DA2.portfolio_label" in sql  # TOP 1 without an order is not repeatable
     assert cfg.portfolio_label_lookup("d", "R", outer=True).startswith("OUTER APPLY")
 
 

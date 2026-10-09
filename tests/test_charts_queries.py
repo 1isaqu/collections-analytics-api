@@ -348,6 +348,44 @@ def test_detail_by_portfolio_filters_the_label(db, sqlite_cfg, period):
     assert run(db, sqlite_cfg, details.by_portfolio, "auto", period, "agreements", "Nothing") == []
 
 
+def test_an_agreement_with_two_labels_is_listed_where_the_chart_counts_it(sqlite_cfg, period):
+    conn = sq.connect()
+    sq.with_agents(conn, (1, "Agent 01", "agent_01"))
+    sq.insert(conn, "agreements", [sq.installment(row_id=1, agreement_id=7001, amount=500.0)])
+    # The label that sorts last is stored first, so insertion order cannot decide the pick.
+    sq.insert(
+        conn,
+        "agreement_debts",
+        [{"agreement_id": 7001, "portfolio_id": 1, "debt_id": d} for d in (71, 72)],
+    )
+    sq.insert(
+        conn,
+        "debt_attributes",
+        [
+            {"debt_id": 71, "portfolio_label": "Portfolio A-02"},
+            {"debt_id": 72, "portfolio_label": "Portfolio A-01"},
+        ],
+    )
+    chart = run(conn, sqlite_cfg, queries.by_portfolio, "auto", period, "agreements")
+    assert chart == [
+        {"portfolio_label": "Portfolio A-01", "agreement_count": 1, "agreement_value": 500.0}
+    ]
+    listed = {
+        label: [
+            r["agreement_id"]
+            for r in run(
+                conn, sqlite_cfg, details.by_portfolio, "auto", period, "agreements", label
+            )
+        ]
+        for label in ("Portfolio A-01", "Portfolio A-02")
+    }
+    assert listed == {"Portfolio A-01": [7001], "Portfolio A-02": []}
+    everything = run(conn, sqlite_cfg, details.all_portfolios, "auto", period, "agreements")
+    assert [(r["agreement_id"], r["portfolio_label"]) for r in everything] == [
+        (7001, "Portfolio A-01")
+    ]
+
+
 def test_detail_by_agent(db, sqlite_cfg, period):
     rows = run(db, sqlite_cfg, details.by_agent, "auto", period, "exceptions", "Agent 02")
     assert sorted(r["agreement_id"] for r in rows) == [5002, 5007]

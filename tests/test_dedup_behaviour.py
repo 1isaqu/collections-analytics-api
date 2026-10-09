@@ -13,6 +13,7 @@ from __future__ import annotations
 import pytest
 
 from collections_api.core.sql import Period
+from collections_api.domains.charts import details as chart_details
 from collections_api.domains.charts import queries as chart_queries
 from collections_api.domains.effectiveness import queries as effectiveness_queries
 from collections_api.domains.productivity import queries as productivity_queries
@@ -113,7 +114,7 @@ def test_a_rewrite_with_a_status_outside_every_set_does_not_hide_the_row(conn, s
     assert row["agreement_count"] == 1 and row["rejected_count"] == 0
 
 
-def test_chart_totals_and_details_use_the_same_ranking(conn, sqlite_cfg):
+def test_card_chart_and_detail_list_agree_on_a_rewritten_installment(conn, sqlite_cfg):
     sq.insert(
         conn,
         "agreements",
@@ -124,6 +125,14 @@ def test_chart_totals_and_details_use_the_same_ranking(conn, sqlite_cfg):
     )
     summary, _ = chart_queries.first_installment_summary(sqlite_cfg, "auto", DAY, None)
     assert sq.run(conn, summary) == [{"first_installment_value": 1000.0, "agreement_count": 1}]
+    chart = chart_queries.by_portfolio(sqlite_cfg, "auto", DAY, "agreements")
+    assert sq.run(conn, chart) == [
+        {"portfolio_label": "Portfolio A-01", "agreement_count": 1, "agreement_value": 1000.0}
+    ]
+    listing = chart_details.by_portfolio(sqlite_cfg, "auto", DAY, "agreements", "Portfolio A-01")
+    assert [(r["agreement_id"], r["first_installment_value"]) for r in sq.run(conn, listing)] == [
+        (6001, 1000.0)
+    ]
 
 
 def test_effectiveness_counts_a_duplicated_slip_once(conn, sqlite_cfg):

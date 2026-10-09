@@ -152,8 +152,8 @@ def sqlite_config(cfg: QueryConfig) -> QueryConfig:
     """``cfg`` with the portfolio lookup rewritten as a join.
 
     SQLite has no ``CROSS``/``OUTER APPLY``. The replacement picks one label per
-    (agreement, portfolio) with ``MIN``, which is what ``TOP 1`` yields when an
-    agreement's debts carry a single label, as they do in the test data.
+    (agreement, portfolio) with ``MIN``, which is what ``TOP 1 ... ORDER BY
+    portfolio_label`` yields.
     """
     values = {f.name: getattr(cfg, f.name) for f in dataclasses.fields(cfg) if f.init}
     return _SqliteQueryConfig(**values)
