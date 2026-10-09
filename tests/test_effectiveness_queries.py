@@ -164,6 +164,11 @@ def test_detail_is_capped_before_the_per_agreement_lookups_run(cfg):
     assert "TOP 10" in queries.detail_query(capped, "auto", MARCH, TODAY, "first", "broken").sql
 
 
+def test_the_detail_label_column_skips_null_and_blank_labels(cfg):
+    sql = queries.detail_query(cfg, "auto", MARCH, TODAY, "first", "broken").sql
+    assert "DA2.portfolio_label IS NOT NULL AND LTRIM(RTRIM(DA2.portfolio_label)) <> ''" in sql
+
+
 def test_the_portfolio_label_is_bound_once_per_line(cfg):
     one = queries.portfolio_summary_query(cfg, "auto", MARCH, "first", "Portfolio A-01")
     both = queries.portfolio_summary_query(cfg, ALL_LINES, MARCH, "first", "Portfolio A-01")
