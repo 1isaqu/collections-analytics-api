@@ -2,7 +2,7 @@
 
 A read-only FastAPI service that turns eight relational tables into collections KPIs: agreements generated, agent productivity, whether payment slips get paid on time, quarterly targets, and a few aggregates for charts and drill-downs. It runs on SQL Server (T-SQL), answers its data routes with one `{ meta, data, errors }` envelope, caches and pools connections, and ships a generated OpenAPI document and endpoint reference so a front end can be built against it before any database exists.
 
-This is an independent portfolio project. It is not affiliated with any company and contains no real data: every table name, status id, portfolio label and default in the repository is invented.
+This is an independent portfolio project. It is not affiliated with any company and contains no real data: every table name, status id and portfolio label in the repository is invented, and the business defaults are placeholders.
 
 ## What it does
 
@@ -22,8 +22,8 @@ The service sits between a database of collection agreements and a dashboard. It
 
 Some details of how it works:
 
-* Each KPI is computed by one SQL builder. The card, the chart and the drill-down list call the same one, so a number cannot come out two ways.
-* Aggregates over contact events and agreements are separate CTEs joined on the agent. Installments are de-duplicated with the business filters applied before the ranking. A portfolio label is resolved with `CROSS APPLY ... TOP 1`, so an agreement that covers several debts stays one row.
+* The card, the chart and the drill-down list build on the same de-duplication, window, status-set and exclusion fragments in `core/sql.py`. They are separate builders, and the places where two routes count differently are listed in [docs/decisions.md](docs/decisions.md#counting-grains-are-explicit).
+* Aggregates over contact events and agreements are separate CTEs joined on the agent. Installments are de-duplicated with the business filters applied before the ranking. A portfolio label is resolved with `CROSS APPLY ... TOP 1 ... ORDER BY`, so an agreement that covers several debts stays one row and always lands under the same label.
 * A right-party contact (CPC) needs both the `answered` and the `right_party` flag, so attempts, answers, CPC and agreements stay in order. A test pins this.
 * The app takes its database through a one-method protocol. Importing it, building it and exporting the OpenAPI document never import `pyodbc`, and the tests run with no database.
 * Operational details: a single-flight TTL cache with an entry ceiling, a connection pool that never blocks and replaces stale connections, driver timeouts mapped to 504, constant-time credential checks, a sliding-window rate limit, request body ceilings, optional Sentry and an optional event log.
@@ -35,7 +35,7 @@ Some details of how it works:
  HTTP request
       |
   CORS -> body-size ceiling -> /api prefix alias -> security middleware
-                                                    (run id, auth, rate limit)
+                                                    (run id, rate limit, auth)
       |
   router handler
       |   resolve product line and date window   core/sql.py   QueryConfig, Period, Query
@@ -74,7 +74,7 @@ The command takes `--host`, `--port` and `--env-file`. To run several workers, u
 
 ## Connect your own data
 
-The service reads eight tables and nothing else: `agreements`, `agreement_debts`, `debts`, `debt_attributes`, `contact_events`, `contact_results`, `agreement_statuses` and `agents`. [docs/data-contract.md](docs/data-contract.md) lists every column the service reads, with types and meaning, and shows how to expose an existing table under a contract name with a view.
+The service reads eight tables and nothing else: `agreements`, `agreement_debts`, `debts`, `debt_attributes`, `contact_events`, `contact_results`, `agreement_statuses` and `agents`. [docs/data-contract.md](docs/data-contract.md) lists every column the service reads, with types and meaning, and shows how to expose an existing table under a contract name with a view. The optional index route needs base tables, because SQL Server cannot create these indexes on a plain view.
 
 1. Create the eight tables or views in one SQL Server database per product line. The names `auto` and `consumer` are defaults; `PRODUCT_LINES` takes any `name=database` pairs.
 2. Install the driver pieces: an ODBC driver for SQL Server on the machine, then `pip install -e ".[sqlserver]"`.
@@ -120,12 +120,12 @@ Every setting is an environment variable. The table shows the ones you will touc
 | `PRODUCT_LINES` | `auto=collections_auto,consumer=collections_consumer` | Line name to database name. `all` combines lines. |
 | `DB_HOST`, `DB_PORT` | `localhost`, `1433` | SQL Server address. |
 | `DB_USER`, `DB_PASSWORD` | empty | Read-only login. Data routes fail without them. |
-| `DB_QUERY_TIMEOUT` | `60` | Statement timeout in seconds. A timeout answers 504. |
+| `DB_QUERY_TIMEOUT` | `45` | Statement timeout in seconds. A timeout answers 504. |
 | `DB_READ_HINT` | `WITH (NOLOCK)` | Table hint on every read. May be empty. |
 | `STATUS_IDS` | `ACTIVE=21,BROKEN=22,...` | Your ids for the seven fixed status names. |
 | `GRACE_DAYS` | `3` | A slip counts as paid in grace if paid within this many days after its due date. |
 | `EXCLUDED_AGENT_PATTERNS` | `system%,test%` | `LIKE` patterns for agents left out of KPIs, applied in SQL. |
-| `CACHE_TTL_SECONDS` | `60` | Row cache lifetime. `0` turns storage off. |
+| `CACHE_TTL_SECONDS` | `30` | Row cache lifetime. `0` turns storage off. |
 | `REQUIRE_API_AUTH` | `false` | Require `X-API-Key` and a bearer token on every route except `/health/live`. |
 | `API_KEY`, `API_TOKEN` | empty | The expected credentials. Required when auth is on. |
 | `RATE_LIMIT_REQUESTS` | `120` | Requests per window and client address. |
@@ -150,7 +150,7 @@ The suite needs no database and no network. It builds the app around a recording
 * the targets PDF extractor, fed synthetic words with checksums, and the regression models;
 * the documents: `docs/openapi.json` and `docs/api-contract.md` match a fresh export, every response model matches its query columns, and every column the SQL reads is listed in the data contract.
 
-CI also runs `ruff check`, `ruff format --check` and both export scripts with `--check`. The full run takes a few minutes on a slow laptop. The slowest tests, at 10 to 20 seconds each there, start a fresh interpreter to prove the app imports without a driver or a database.
+CI also runs `ruff check`, `ruff format --check` and both export scripts with `--check`. The full run takes a few minutes. The slowest tests start a fresh interpreter to prove the app imports without a driver or a database; on a slow laptop each one takes 10 to 20 seconds.
 
 ## Regenerating the contract documents
 
@@ -192,9 +192,9 @@ docs/                  architecture, decisions, data contract, data sources, con
 tests/                 inline fixtures only
 ```
 
-## Key design decisions
+## Design decisions
 
-The full list, with reasoning, is in [docs/decisions.md](docs/decisions.md). The ones that most affect the code:
+The full list, with reasoning, is in [docs/decisions.md](docs/decisions.md). The ones that shape the code most:
 
 * The service only reads. The one write path, creating indexes, is off by default and runs as a dry run unless asked.
 * "Generated" agreements (approved, broken and auto-broken) are the base of every value measure, so an agreement made today counts even if it breaks next week. Breaking is reported separately.

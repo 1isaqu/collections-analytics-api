@@ -9,7 +9,7 @@ a builder, and wraps the rows.
  HTTP request
       |
   CORS  ->  body-size ceiling  ->  /api prefix alias  ->  security middleware
-                                                          (run id, auth, rate limit)
+                                                          (run id, rate limit, auth)
       |
   router handler
       |   resolve line and window         core/sql.py   QueryConfig, Period, Query
@@ -58,7 +58,8 @@ fragments:
 * `dedup(...)` renders `agreements` as a derived table that keeps one row per installment
   (latest write wins) with the business filters applied before the ranking.
 * `portfolio_label_lookup(...)` resolves an agreement's portfolio label with
-  `CROSS APPLY (SELECT TOP 1 ...)` so an agreement that covers several debts stays one row.
+  `CROSS APPLY (SELECT TOP 1 ... ORDER BY label)` so an agreement that covers several debts
+  stays one row and always gets the same label.
 * `excluded_agents()` renders the agent exclusion as `NOT LIKE` clauses.
 * `paid_in_grace()` renders the grace-period expression.
 * `across_lines(line, build)` builds one statement per product line in scope and joins them
@@ -121,7 +122,8 @@ loaded once, and sets `meta.quality.stale` when the last refresh of that key fai
 * The interactive docs follow the same switch: off when authentication is required, unless
   `ENABLE_DOCS` says otherwise.
 * Routes under `/dashboard/`, `/effectiveness/`, `/regression/` and `/admin/` are rate
-  limited per client address with a sliding window. The bucket table is pruned so it cannot
+  limited per client address with a sliding window. The limiter runs before the credential
+  check, so requests with bad credentials count too. The bucket table is pruned so it cannot
   grow without bound.
 * Routers passed as `extra_routers` get the same authentication and rate limit, by their
   first path segment.

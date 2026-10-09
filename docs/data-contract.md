@@ -3,7 +3,9 @@
 The service reads eight tables. It never writes to them, and it never creates them: you
 provide tables or views with these names and columns on your own database. Nothing else
 in your schema is touched. The one exception is the optional index route, described in
-[architecture.md](architecture.md), which is off by default.
+[architecture.md](architecture.md), which is off by default. It creates ordinary indexes,
+which SQL Server cannot build on a plain view, so it only works where the contract names
+are base tables.
 
 The statements are written in T-SQL (SQL Server). If you run another engine, the query
 builders in `src/collections_api/domains/` are the place to adapt; see
@@ -116,9 +118,9 @@ Extra attributes of a debt. The service reads one: the portfolio label.
 | `debt_id` | integer | Refers to `debts.debt_id`. |
 | `portfolio_label` | text | Name of the portfolio the debt belongs to, for example `Portfolio A-01`. `NULL` or blank when unknown. |
 
-An agreement takes the first non-null label among its debts. Agreements whose debts have
-no label are left out of the by-portfolio charts and can be listed with the
-`exceptions-without-portfolio` route.
+An agreement takes one label from its debts: among the non-null ones, the label that sorts
+first. Agreements whose debts have no label are left out of the by-portfolio charts and can
+be listed with the `exceptions-without-portfolio` route.
 
 ### `contact_events`
 

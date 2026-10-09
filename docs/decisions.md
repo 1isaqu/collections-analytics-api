@@ -1,4 +1,4 @@
-# Key decisions
+# Decisions
 
 Each entry says what was decided and why. They are the choices that shape the code; the
 smaller ones are in the module docstrings.
@@ -10,31 +10,47 @@ router that answers 403 unless `ENABLE_INDEX_ADMIN` is set, runs as a dry run un
 otherwise, and needs a real connection pool. Everything else works with a database login
 that can read the eight tables of the data contract and nothing more.
 
-## Business rules live in SQL builders
+## Business rules live in SQL fragments
 
-A KPI is defined once, in the function that builds its statement, and every route that shows
-it calls that function. Handlers only resolve parameters, call a builder and wrap the rows.
-The same SQL therefore backs a card, a chart and a drill-down list, and a number cannot
-differ between them because two places computed it.
+The rules that decide a number are written once, in `core/sql.py`: the de-duplication of
+installments, the half-open date window, the status sets and the agent exclusion. Every
+builder that counts agreements takes them from there, and handlers only resolve parameters,
+call a builder and wrap the rows. The card, the chart and the drill-down list are still
+separate builders, so they can disagree wherever their shapes differ. The portfolio label
+has a single pick rule for that reason (next entry), and a test puts one agreement under
+two labels to check that the chart and the lists still agree. The places where two routes
+count differently on purpose are listed under "Counting grains are explicit".
 
 ## Aggregates are separate CTEs
 
 A statement that joins contact events to agreements multiplies rows, because both are
 many-sided per agent. The per-agent builders compute each aggregate in its own CTE and join
 the results on the agent. An agent with agreements and no contact events still appears,
-with zero effort. The cost is longer statements; the gain is that a count is right by
-construction instead of right until someone adds a join.
+with zero effort. The cost is longer statements. In exchange, a join added later cannot
+change a count.
 
 ## Portfolio is resolved with `CROSS APPLY ... TOP 1`
 
 An agreement can cover several debts, each carrying a portfolio label. A join would turn
 one agreement into several rows and inflate every sum. `CROSS APPLY (SELECT TOP 1 ...)`
-returns the first non-null label per agreement and keeps the cardinality. The match is on
-the pair (`agreement_id`, `portfolio_id`) because an agreement number can exist in more
-than one portfolio. Where the portfolio is a filter rather than a column, an
-`EXISTS` subquery on the same pair does the job. Agreements with no label drop out of the
-by-portfolio charts (`CROSS APPLY`), and a separate route lists them so totals can be
-reconciled.
+returns one non-null label per agreement and keeps the cardinality. When the debts carry
+different labels, the label that sorts first wins: the `ORDER BY` makes the pick
+repeatable, because `TOP 1` without one may return a different row from run to run. The
+match is on the pair (`agreement_id`, `portfolio_id`) because an agreement number can exist
+in more than one portfolio. Agreements with no label drop out of the by-portfolio charts
+(`CROSS APPLY`), and a separate route lists them so totals can be reconciled.
+
+The agreement lists behind the charts (`domains/charts/details.py`) get the same label from
+a `ROW_NUMBER()` subquery and a join instead of `APPLY`, because the apply form re-ran the
+lookup per row on long windows. The ranking uses the same order, and the list for one
+portfolio filters on the label after the pick, so it holds the agreements the chart counts
+under that portfolio and no others.
+
+Where the portfolio is a filter rather than a column, as in the optional portfolio
+parameter of the productivity route, an `EXISTS` subquery on the same pair does the job.
+That filter matches an agreement under every label its debts carry. For an agreement
+whose debts span two labels, the productivity route filtered by either label counts it,
+while the by-portfolio charts count it only under the first.
 
 ## Installments are de-duplicated, and filters run first
 
@@ -77,13 +93,19 @@ for every debt it covers, and exists for one headline card. Per-agent rows, rank
 average ticket and conversion use the first. Dividing value by contracts would understate
 the ticket, so the second is documented as never a denominator.
 
+Two routes also count the first grain differently. The productivity route counts one per
+(agent, agreement, portfolio, status) group, and the performance table counts
+`DISTINCT agreement_id` per agent. The numbers differ only when an agreement number shows up
+under more than one portfolio id, or under more than one status, inside the window. Both
+are agreements, and neither is a contract count.
+
 ## Conversion and slip effectiveness are different measures
 
 `conversion_pct` is agreements over right-party contacts. The share of slips paid in grace
-is a different question and has its own names (`slip_effectiveness_pct`,
-`paid_per_cpc_pct`). Sharing one name between them makes two different numbers hard to tell
-apart, so a field name is tied to one formula per route family and the glossary lists where
-a name is shared.
+is a different question and has its own names (`paid_in_grace_pct`,
+`slip_effectiveness_pct`, `paid_per_cpc_pct`). Sharing one name between them makes two
+different numbers hard to tell apart, so a field name is tied to one formula, and the
+glossary gives the formula of each.
 
 ## Right-party contact needs both flags
 
@@ -163,6 +185,6 @@ the log and to Sentry if it is configured.
 ## Calibrated numbers are configuration
 
 Grace days, break-curve edges, minimum sample sizes for benchmarks, row caps, agent patterns
-and the status ids are settings with plainly invented defaults. The right values depend on
+and the status ids are settings with invented defaults. The right values depend on
 the operation and on how its data is recorded, and no data ships with this repository.
 Calibrate them on yours before you trust a number.
