@@ -475,6 +475,8 @@ def _plain_response(schema: Schema, operation: Schema) -> str:
     for status, response in operation["responses"].items():
         body = _response_schema(operation, status)
         name = _ref_name(body["$ref"]) if body and "$ref" in body else None
+        if name in HIDDEN_SCHEMAS:
+            continue  # the framework's validation schema; Conventions documents the 422
         label = f"**{status}**: {response.get('description', '')}"
         if name and name != "ErrorBody":
             model = schema["components"]["schemas"][name]

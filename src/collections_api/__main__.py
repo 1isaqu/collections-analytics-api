@@ -11,7 +11,10 @@ from collections_api.settings import Settings, SettingsError
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="collections-api", description=__doc__)
+    parser = argparse.ArgumentParser(
+        prog="collections-api",
+        description="Read the settings and serve the Collections Analytics API with uvicorn.",
+    )
     parser.add_argument(
         "--host", default="127.0.0.1", help="Address to bind (default: %(default)s)."
     )

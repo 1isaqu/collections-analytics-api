@@ -61,14 +61,17 @@ being collected from, so your tables need not expose them.
 
 ## Where the constants come from
 
-Every default in `settings.py` is arbitrary and was picked so the examples run: the grace
+Every default in `settings.py` was picked so the examples run. Most are arbitrary: the grace
 days, the break-curve band edges, the minimum sample sizes, the agent exclusion patterns, the
 status ids, the row caps, and the operational numbers (query timeout, pool size and
-connection age, cache lifetimes and entry ceiling, rate limit). The operational ones are
-small round numbers, not measurements of any load. None comes from a public source and none
-was calibrated on data. The right values depend on how your operation records its work and
-on how much traffic you serve. Calibrate them on your own data, and do not read a number the
-service returns with the defaults as a finding.
+connection age, cache lifetimes and entry ceiling, requests per rate-limit window). The
+operational ones are small round numbers, not measurements of any load. Three operational
+defaults are common starting values instead: the 10-second connect timeout, the 60-second
+rate-limit window (so the limit reads as requests per minute) and the ceiling of 5000
+rate-limit buckets. None of the defaults comes from a public source and none was calibrated
+on data. The right values depend on how your operation records its work and on how much
+traffic you serve. Calibrate them on your own data, and do not read a number the service
+returns with the defaults as a finding.
 
 The examples in the README and in [api-contract.md](api-contract.md) use invented rows.
 `docs/openapi.json` and `docs/api-contract.md` are generated from the code and contain no

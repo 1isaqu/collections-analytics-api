@@ -34,7 +34,7 @@ SPA_RESERVED_PREFIXES = (
 def resolve_inside(root: str | Path, relative: str) -> Path | None:
     """``relative`` resolved under ``root``, or ``None`` if it would leave it.
 
-    The server decodes the URL path but does not normalise it, so ``..`` segments arrive
+    The server decodes the URL path but does not normalize it, so ``..`` segments arrive
     intact; an absolute component (``C:/x`` on Windows, ``/etc`` elsewhere) would make
     ``os.path.join`` discard the root. Both are refused, and so is a symlink that
     resolves outside the root.

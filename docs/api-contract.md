@@ -281,12 +281,6 @@ Runs `SELECT 1` against one product line. 503 if it fails.
 
 **503**: The line is down. Body: the error body.
 
-**422**: Validation Error Body `HTTPValidationError`:
-
-| Field | Type | Always present | Description |
-|---|---|---|---|
-| `detail` | list of [`ValidationError`](#validationerror) | no |  |
-
 ## Agreements
 
 Agreement lists, performance table, portfolio labels.
@@ -723,10 +717,10 @@ samples cannot move a quartile. The scan is wide, so the result is cached for
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `cpc_rate_pct` | [`Quartiles`](#quartiles) | yes | Per-agent cpc_count / answer_count * 100, summarised. |
-| `conversion_pct` | [`Quartiles`](#quartiles) | yes | Per-agent agreement_count / cpc_count * 100, summarised. |
-| `cash_effectiveness_pct` | [`Quartiles`](#quartiles) | yes | Per-agent first-installment cash received over first-installment value, summarised. |
-| `exception_pct` | [`Quartiles`](#quartiles) | yes | Per-agent exception value over total agreement value, summarised. |
+| `cpc_rate_pct` | [`Quartiles`](#quartiles) | yes | Per-agent cpc_count / answer_count * 100, summarized. |
+| `conversion_pct` | [`Quartiles`](#quartiles) | yes | Per-agent agreement_count / cpc_count * 100, summarized. |
+| `cash_effectiveness_pct` | [`Quartiles`](#quartiles) | yes | Per-agent first-installment cash received over first-installment value, summarized. |
+| `exception_pct` | [`Quartiles`](#quartiles) | yes | Per-agent exception value over total agreement value, summarized. |
 | `agent_count` | integer | yes | Agents that passed the minimum-sample rules. |
 | `lookback_months` | integer | yes | Look-back window that was applied, in months. |
 

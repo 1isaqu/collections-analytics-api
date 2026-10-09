@@ -118,9 +118,9 @@ Extra attributes of a debt. The service reads one: the portfolio label.
 | `debt_id` | integer | Refers to `debts.debt_id`. |
 | `portfolio_label` | text | Name of the portfolio the debt belongs to, for example `Portfolio A-01`. `NULL` or blank when unknown. |
 
-An agreement takes one label from its debts: among the non-null ones, the label that sorts
-first. Agreements whose debts have no label are left out of the by-portfolio charts and can
-be listed with the `exceptions-without-portfolio` route.
+An agreement takes one label from its debts: among the ones that are not null or blank, the
+label that sorts first. Agreements whose debts have no such label are left out of the
+by-portfolio charts and can be listed with the `exceptions-without-portfolio` route.
 
 ### `contact_events`
 

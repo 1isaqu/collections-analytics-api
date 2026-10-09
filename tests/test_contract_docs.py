@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -183,6 +184,14 @@ def test_the_markdown_has_a_section_for_every_endpoint_and_every_parameter(schem
         assert f"Operation `{operation['operationId']}`" in text
         for parameter in operation.get("parameters", ()):
             assert f"| `{parameter['name']}` | {parameter['in']} |" in text
+
+
+def test_every_in_page_link_of_the_markdown_has_a_heading(schema):
+    text = contract_doc.render_contract(schema)
+    headings = re.findall(r"^#+ (.+)$", text, flags=re.MULTILINE)
+    slugs = {re.sub(r"[^a-z0-9 _-]", "", h.lower()).replace(" ", "-") for h in headings}
+    missing = sorted(set(re.findall(r"\]\(#([^)]+)\)", text)) - slugs)
+    assert not missing, f"links to headings that do not exist: {missing}"
 
 
 def test_the_markdown_documents_the_meta_keys_of_a_route_that_has_them(schema):

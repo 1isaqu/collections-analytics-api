@@ -16,10 +16,11 @@ The rules that decide a number are written once, in `core/sql.py`: the de-duplic
 installments, the half-open date window, the status sets and the agent exclusion. Every
 builder that counts agreements takes them from there, and handlers only resolve parameters,
 call a builder and wrap the rows. The card, the chart and the drill-down list are still
-separate builders, so they can disagree wherever their shapes differ. The portfolio label
-has a single pick rule for that reason (next entry), and a test puts one agreement under
-two labels to check that the chart and the lists still agree. The places where two routes
-count differently on purpose are listed under "Counting grains are explicit".
+separate builders, so a rule written into one builder only can make them disagree. The
+portfolio label has a single pick rule for that reason (next entry), and tests put one
+agreement under two labels, or under a blank and a named label, to check that the chart and
+the lists still agree. The places where two routes count differently on purpose are listed
+under "Counting grains are explicit".
 
 ## Aggregates are separate CTEs
 
@@ -33,12 +34,13 @@ change a count.
 
 An agreement can cover several debts, each carrying a portfolio label. A join would turn
 one agreement into several rows and inflate every sum. `CROSS APPLY (SELECT TOP 1 ...)`
-returns one non-null label per agreement and keeps the cardinality. When the debts carry
-different labels, the label that sorts first wins: the `ORDER BY` makes the pick
-repeatable, because `TOP 1` without one may return a different row from run to run. The
-match is on the pair (`agreement_id`, `portfolio_id`) because an agreement number can exist
-in more than one portfolio. Agreements with no label drop out of the by-portfolio charts
-(`CROSS APPLY`), and a separate route lists them so totals can be reconciled.
+returns one label per agreement and keeps the cardinality; a null or blank label counts as
+missing. When the debts carry different labels, the label that sorts first wins: the
+`ORDER BY` makes the pick repeatable, because `TOP 1` without one may return a different
+row from run to run. The match is on the pair (`agreement_id`, `portfolio_id`) because an
+agreement number can exist in more than one portfolio. Agreements with no label drop out of
+the by-portfolio charts (`CROSS APPLY`), and a separate route lists them so totals can be
+reconciled.
 
 The agreement lists behind the charts (`domains/charts/details.py`) get the same label from
 a `ROW_NUMBER()` subquery and a join instead of `APPLY`, because the apply form re-ran the
@@ -97,7 +99,7 @@ Two routes also count the first grain differently. The productivity route counts
 (agent, agreement, portfolio, status) group, and the performance table counts
 `DISTINCT agreement_id` per agent. The numbers differ only when an agreement number shows up
 under more than one portfolio id, or under more than one status, inside the window. Both
-are agreements, and neither is a contract count.
+count agreements, not contracts.
 
 ## Conversion and slip effectiveness are different measures
 
@@ -148,7 +150,7 @@ Identical concurrent requests share one query. Followers wait a little longer th
 statement timeout, so a leader that times out reports its own 504 before its followers give
 up, and one hung query cannot drain the worker threads. Keys include client text, so the
 store has a hard ceiling with expired-first eviction. A TTL of zero disables storage but
-keeps the single-flight behaviour.
+keeps the single-flight behavior.
 
 ## Slow series are precomputed, with state per key
 

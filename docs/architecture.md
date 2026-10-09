@@ -115,12 +115,13 @@ loaded once, and sets `meta.quality.stale` when the last refresh of that key fai
 
 ## Security
 
-* Authentication is off by default. With `REQUIRE_API_AUTH=true`, every route except
+* Authentication is off by default. With `REQUIRE_API_AUTH=true`, every API route except
   `GET /health/live` needs both an `X-API-Key` header and an `Authorization: Bearer` token.
   Both are compared in constant time. Settings refuse to start with the switch on and a
   credential missing.
-* The interactive docs follow the same switch: off when authentication is required, unless
-  `ENABLE_DOCS` says otherwise.
+* The interactive docs and the OpenAPI document never ask for credentials. They are off
+  when authentication is required, unless `ENABLE_DOCS` turns them on. A front end served
+  from `FRONTEND_DIST_DIR` is not behind authentication either.
 * Routes under `/dashboard/`, `/effectiveness/`, `/regression/` and `/admin/` are rate
   limited per client address with a sliding window. The limiter runs before the credential
   check, so requests with bad credentials count too. The bucket table is pruned so it cannot
@@ -144,7 +145,7 @@ is off. The NDJSON event log (`ENABLE_TELEMETRY_LOG`) records query starts, ends
 timeouts, auth rejections, rate-limit hits, one line per response and unhandled
 exceptions, and rolls over at `TELEMETRY_LOG_MAX_BYTES`. Sentry (`SENTRY_DSN`, environment
 only) receives exceptions, structured logs, and metrics for query duration, pool acquire
-time and cache hits and misses. It is initialised without local variables or request
+time and cache hits and misses. It is initialized without local variables or request
 bodies, and a malformed DSN is logged instead of aborting start-up. Every response carries
 `X-Run-Id`, the same value as `meta.run_id`.
 

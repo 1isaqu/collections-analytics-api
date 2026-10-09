@@ -47,11 +47,11 @@ Some details of how it works:
   rows -> envelope { meta, data, errors } -> JSON
 ```
 
-Nothing opens a connection until the first query runs. [docs/architecture.md](docs/architecture.md) describes each layer, the caching and refresh behaviour, security and observability. [docs/decisions.md](docs/decisions.md) explains why the code is shaped this way.
+Nothing opens a connection until the first query runs. [docs/architecture.md](docs/architecture.md) describes each layer, the caching and refresh behavior, security and observability. [docs/decisions.md](docs/decisions.md) explains why the code is shaped this way.
 
 ## Quick start
 
-You need Python 3.11 or newer. The tests ran locally on 3.14, and CI runs 3.11 and 3.13.
+You need Python 3.11 or newer. CI runs the tests on 3.11, 3.12, 3.13 and 3.14.
 
 ```
 python -m venv .venv
@@ -61,10 +61,10 @@ pytest
 python scripts/export_openapi.py --check
 ```
 
-That is enough to read, test and regenerate everything. To run the service on its own:
+Those commands install the package, run the tests and check that the OpenAPI document is current. To run the service on its own:
 
 ```
-cp .env.example .env
+cp .env.example .env               # Windows cmd: copy .env.example .env
 python -m collections_api          # http://127.0.0.1:8000, interactive docs at /docs
 ```
 
@@ -126,7 +126,7 @@ Every setting is an environment variable. The table shows the ones you will touc
 | `GRACE_DAYS` | `3` | A slip counts as paid in grace if paid within this many days after its due date. |
 | `EXCLUDED_AGENT_PATTERNS` | `system%,test%` | `LIKE` patterns for agents left out of KPIs, applied in SQL. |
 | `CACHE_TTL_SECONDS` | `30` | Row cache lifetime. `0` turns storage off. |
-| `REQUIRE_API_AUTH` | `false` | Require `X-API-Key` and a bearer token on every route except `/health/live`. |
+| `REQUIRE_API_AUTH` | `false` | Require `X-API-Key` and a bearer token on every API route except `/health/live`. The interactive docs and a served front end stay open. |
 | `API_KEY`, `API_TOKEN` | empty | The expected credentials. Required when auth is on. |
 | `RATE_LIMIT_REQUESTS` | `120` | Requests per window and client address. |
 | `ENABLE_INDEX_ADMIN` | `false` | Allows the only routes that can write to the database. |
@@ -150,7 +150,7 @@ The suite needs no database and no network. It builds the app around a recording
 * the targets PDF extractor, fed synthetic words with checksums, and the regression models;
 * the documents: `docs/openapi.json` and `docs/api-contract.md` match a fresh export, every response model matches its query columns, and every column the SQL reads is listed in the data contract.
 
-CI also runs `ruff check`, `ruff format --check` and both export scripts with `--check`. The full run takes a few minutes. The slowest tests start a fresh interpreter to prove the app imports without a driver or a database; on a slow laptop each one takes 10 to 20 seconds.
+CI also runs `ruff check`, `ruff format --check` and both export scripts with `--check`. On a 4-core Linux machine with Python 3.13 the full run takes under a minute, and a slow laptop can need a few minutes. The tests that start a fresh interpreter, to prove the app imports without a driver or a database, take one to two seconds each on that Linux machine and 10 to 20 seconds each on a slow laptop.
 
 ## Regenerating the contract documents
 
@@ -175,7 +175,7 @@ src/collections_api/
     cache.py           single-flight TTL cache
     envelope.py        the { meta, data, errors } builder
     errors.py          ApiError: a status code and a message that is safe to show
-    pagination.py      limit and offset normalisation
+    pagination.py      limit and offset normalization
     ratelimit.py       sliding-window limiter
     telemetry.py       optional event log and optional Sentry
     indexes.py         recommended-index statements, status and apply
@@ -201,7 +201,7 @@ The full list, with reasoning, is in [docs/decisions.md](docs/decisions.md). The
 * Excluded agents are removed inside the SQL statement, never after the rows come back, so they cannot leak into sums or top lists.
 * Dates are written into the SQL as `CAST('YYYYMMDD' AS DATE)` literals built from Python dates instead of `DECLARE`d variables, so the optimizer sees the values.
 * The app receives an explicit `AppContext` instead of using module-level singletons, which is what lets tests and the OpenAPI export run with no database.
-* The slow effectiveness series are refreshed on a timer, with freshness and the last error tracked for each series and variant, and served from memory. A series that has never loaded answers 503 and does not return an empty list.
+* The slow effectiveness series are refreshed on a timer, with freshness and the last error tracked for each series and variant, and served from memory. A series that has never loaded answers 503, so an empty list always means no data.
 * No response or query carries a name, document number, phone or address of the people being collected from. Effort is counted on an opaque `debt_owner_id`.
 
 ## Extending
@@ -218,10 +218,10 @@ The full list, with reasoning, is in [docs/decisions.md](docs/decisions.md). The
 * The rate limit is keyed on the client address the server sees. Behind a reverse proxy that address is the proxy's, unless uvicorn is configured to trust forwarded headers.
 * Authentication is one shared API key plus one bearer token. There are no per-user credentials, roles or audit trail.
 * Most routes return the whole result for the window. Only the agreements list is paged, and the slip detail route has a row cap.
-* `NOLOCK` reads can see rows that are still being written. That trade is deliberate for analytics and is configurable.
+* `NOLOCK` reads can see rows that are still being written. Set `DB_READ_HINT` to an empty value to read without the hint.
 * "Today" is the server's local date. Timestamps are not shifted for time zones.
 * The targets extractor reads one PDF layout (a header row, 16 columns, three months) by word position and refuses a document whose row totals do not add up. Other layouts need a change to `Layout` or to the extractor.
-* The regression route is a small ordinary-least-squares fit in numpy for charting agent results against effort. It is not a modelling framework.
+* The regression route is a small ordinary-least-squares fit in numpy for charting agent results against effort. It is not a modeling framework.
 
 ## License
 

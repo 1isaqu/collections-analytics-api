@@ -120,7 +120,7 @@ class Telemetry:
 
 
 def init_sentry(settings: Settings) -> ModuleType | None:
-    """Initialise Sentry if a DSN is configured. Returns the module, or ``None``.
+    """Initialize Sentry if a DSN is configured. Returns the module, or ``None``.
 
     Local variables and request bodies stay out of events: frames can hold database
     credentials and request bodies can hold uploaded documents. A malformed DSN or a

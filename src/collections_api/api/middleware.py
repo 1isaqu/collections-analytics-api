@@ -32,7 +32,7 @@ from collections_api.settings import Settings
 BODY_METHODS = frozenset({"POST", "PUT", "PATCH"})
 # Room for multipart boundaries and headers around an upload of the configured size.
 MULTIPART_OVERHEAD_BYTES = 64 * 1024
-# Rough upper bound for one regression point serialised as JSON.
+# Rough upper bound for one regression point serialized as JSON.
 REGRESSION_BYTES_PER_POINT = 1024
 
 CallNext = Callable[[Request], Awaitable[Response]]

@@ -168,7 +168,7 @@ class _SqliteQueryConfig(QueryConfig):
             "    SELECT RD.agreement_id, RD.portfolio_id, MIN(DA2.portfolio_label) AS portfolio_label\n"
             f"    FROM {self.table(database, 'agreement_debts', 'RD')}\n"
             f"    JOIN {self.table(database, 'debt_attributes', 'DA2')} ON RD.debt_id = DA2.debt_id\n"
-            "    WHERE DA2.portfolio_label IS NOT NULL\n"
+            "    WHERE DA2.portfolio_label IS NOT NULL AND LTRIM(RTRIM(DA2.portfolio_label)) <> ''\n"
             "    GROUP BY RD.agreement_id, RD.portfolio_id\n"
             f") AS DA ON DA.agreement_id = {agreement_alias}.agreement_id\n"
             f"       AND DA.portfolio_id = {agreement_alias}.portfolio_id"
