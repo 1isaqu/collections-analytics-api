@@ -150,7 +150,7 @@ Identical concurrent requests share one query. Followers wait a little longer th
 statement timeout, so a leader that times out reports its own 504 before its followers give
 up, and one hung query cannot drain the worker threads. Keys include client text, so the
 store has a hard ceiling with expired-first eviction. A TTL of zero disables storage but
-keeps the single-flight behaviour.
+keeps the single-flight behavior.
 
 ## Slow series are precomputed, with state per key
 
