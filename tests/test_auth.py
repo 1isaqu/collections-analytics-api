@@ -94,12 +94,17 @@ def test_rate_limit_answers_429_with_retry_after(make_app):
     assert client.get("/health/live").status_code == 200  # monitoring is never limited
 
 
-def test_rate_limit_does_not_apply_to_health_probes_or_rejected_requests(make_app):
+def test_rate_limit_does_not_apply_to_health_probes(make_app):
     client, _ = with_auth(make_app, RATE_LIMIT_REQUESTS="1")
     for _ in range(5):
         assert client.get("/health/live").status_code == 200
-    for _ in range(5):
-        assert client.get(DATA_URL).status_code == 401  # rejected before it is counted
+
+
+def test_requests_with_bad_credentials_count_toward_the_limit(make_app):
+    client, _ = with_auth(make_app, RATE_LIMIT_REQUESTS="2")
+    assert [client.get(DATA_URL).status_code for _ in range(4)] == [401, 401, 429, 429]
+    # The limit is per client address, so the right credentials do not get through either.
+    assert client.get(DATA_URL, headers=GOOD).status_code == 429
 
 
 def test_rate_limit_also_works_with_auth_off(make_app):

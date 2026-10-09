@@ -149,12 +149,8 @@ def install_middleware(app: FastAPI, protection: Protection) -> None:
         started = time.perf_counter()
 
         if needs_auth(path, protection.protected_prefixes):
-            try:
-                check_auth(context.settings, request.headers)
-            except ApiError as exc:
-                context.telemetry.event("auth_reject", {"path": path}, run_id)
-                context.telemetry.log("warning", "Authentication rejected.", path=path)
-                return error_response(exc.status_code, exc.detail, run_id)
+            # The limiter runs first so that a client guessing credentials is throttled:
+            # a request counts whether or not its credentials are accepted.
             if is_rate_limited(path, protection.rate_limited_prefixes):
                 client = request.client.host if request.client else "unknown"
                 retry_after = context.rate_limiter.hit(client)
@@ -166,6 +162,12 @@ def install_middleware(app: FastAPI, protection: Protection) -> None:
                         run_id,
                         headers={"Retry-After": str(retry_after)},
                     )
+            try:
+                check_auth(context.settings, request.headers)
+            except ApiError as exc:
+                context.telemetry.event("auth_reject", {"path": path}, run_id)
+                context.telemetry.log("warning", "Authentication rejected.", path=path)
+                return error_response(exc.status_code, exc.detail, run_id)
 
         response = await call_next(request)
         response.headers[RUN_ID_HEADER] = run_id
