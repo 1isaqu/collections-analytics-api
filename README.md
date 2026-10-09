@@ -51,7 +51,7 @@ Nothing opens a connection until the first query runs. [docs/architecture.md](do
 
 ## Quick start
 
-You need Python 3.11 or newer. CI runs the tests on 3.11, 3.12, 3.13 and 3.14.
+You need Python 3.11 or newer. CI runs the tests on 3.11, 3.12, 3.13 and 3.14. Development and the local test runs used Python 3.14 on Windows.
 
 ```
 python -m venv .venv
