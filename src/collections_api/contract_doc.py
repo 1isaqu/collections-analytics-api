@@ -1,4 +1,4 @@
-"""Generate the two documents the user interface is built against.
+"""Generate the two documents a front end can be built against.
 
 ``docs/openapi.json`` is the OpenAPI document of the default application. It needs no
 database: the app is built from ``Settings.defaults()`` and never connects.
@@ -274,8 +274,9 @@ document that they return 0 instead). No field identifies a debtor.
 Authentication is off unless the server runs with `REQUIRE_API_AUTH=true`. When it is on,
 every route except `GET /health/live` needs both the `X-API-Key` header and an
 `Authorization: Bearer <token>` header; anything else is a 401. Routes under `/dashboard/`,
-`/effectiveness/`, `/regression/` and `/admin/` are rate limited per client address; the
-429 response carries a `Retry-After` header in seconds. Every response carries an
+`/effectiveness/`, `/regression/` and `/admin/` are rate limited per client address, and a
+request counts whether or not its credentials are accepted. The 429 response carries a
+`Retry-After` header in seconds. Every response carries an
 `X-Run-Id` header, the same value as `meta.run_id`. A client may send its own `X-Run-Id`
 (letters, digits, `.`, `_`, `-`, up to 64 characters) and get it back.
 

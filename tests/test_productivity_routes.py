@@ -65,6 +65,16 @@ def test_validation_turns_numeric_strings_into_numbers_and_names_into_text():
     assert rows[0]["agreement_value"] == 12.5 and rows[0]["agent_name"] == ""
 
 
+def test_validation_returns_counts_as_integers_and_amounts_as_floats():
+    rows, _ = validate_productivity_rows(
+        [productivity_row(attempt_count="10", cpc_count=3.0, agreement_count=None)]
+    )
+    counts = {k: rows[0][k] for k in ("attempt_count", "cpc_count", "agreement_count")}
+    assert counts == {"attempt_count": 10, "cpc_count": 3, "agreement_count": 0}
+    assert all(type(value) is int for value in counts.values())
+    assert type(rows[0]["agreement_value"]) is float
+
+
 def test_a_row_missing_a_required_field_is_a_server_error():
     row = productivity_row()
     del row["exception_value"]

@@ -204,7 +204,7 @@ def test_the_buckets_partition_the_slips(slips):
 def test_conversion_counts_on_time_slips_and_effectiveness_counts_cash(slips):
     db, cfg = slips
     kpi, _ = run_summary(db, cfg)
-    assert kpi["conversion_pct"] == pytest.approx(100 / 6, abs=0.01)
+    assert kpi["paid_in_grace_pct"] == pytest.approx(100 / 6, abs=0.01)
     assert kpi["amount_maturing"] == 3300.0
     assert kpi["amount_received"] == 1300.0  # the late payment still counts as cash
     assert kpi["effectiveness_pct"] == pytest.approx(100 * 1300 / 3300, abs=0.01)
@@ -255,7 +255,7 @@ def test_a_window_with_no_slips_has_no_ratio_and_zero_sums(db, sqlite_cfg):
     kpi = sq.run(db, queries.summary_queries(sqlite_cfg, "auto", empty, TODAY, "first")[0])[0]
     assert (
         kpi["slips_total"] == 0
-        and kpi["conversion_pct"] is None
+        and kpi["paid_in_grace_pct"] is None
         and kpi["effectiveness_pct"] is None
     )
     assert kpi["amount_maturing"] == 0
@@ -272,7 +272,7 @@ def test_the_daily_series_groups_by_issue_day(slips):
             "issue_date": "2026-03-01",
             "slips_issued": 6,
             "slips_paid_in_grace": 1,
-            "conversion_pct": 17,
+            "paid_in_grace_pct": 17,
         }
     ]
 
@@ -289,7 +289,7 @@ def test_the_monthly_series_rounds_the_ratio_to_a_whole_percent(slips):
             "month": 3,
             "slips_issued": 6,
             "slips_paid_in_grace": 2,
-            "conversion_pct": 33,
+            "paid_in_grace_pct": 33,
         }
     ]
 
@@ -298,7 +298,12 @@ def test_the_by_due_series_groups_by_due_day(slips):
     db, cfg = slips
     rows = sq.run(db, queries.series_query(cfg, "auto", "daily-later-by-due"))
     assert rows == [
-        {"due_date": "2026-03-25", "slips_issued": 1, "slips_paid_in_grace": 0, "conversion_pct": 0}
+        {
+            "due_date": "2026-03-25",
+            "slips_issued": 1,
+            "slips_paid_in_grace": 0,
+            "paid_in_grace_pct": 0,
+        }
     ]
 
 

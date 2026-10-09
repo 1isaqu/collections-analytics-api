@@ -11,14 +11,14 @@ SERIES_ROW = {
     "issue_date": "2026-03-01",
     "slips_issued": 2,
     "slips_paid_in_grace": 1,
-    "conversion_pct": 50,
+    "paid_in_grace_pct": 50,
 }
 WINDOW = {"date_from": "2026-03-01", "date_to": "2026-03-31"}
 
 
 def kpis(**overrides):
     row = dict.fromkeys(queries.SUMMARY_COLUMNS, 0)
-    row.update(conversion_pct=25.0, effectiveness_pct=40.0, slips_total=4, slips_paid_in_grace=1)
+    row.update(paid_in_grace_pct=25.0, effectiveness_pct=40.0, slips_total=4, slips_paid_in_grace=1)
     row.update(overrides)
     return row
 
@@ -65,9 +65,11 @@ def test_a_series_defaults_to_every_line_and_refuses_an_unknown_one(client_for):
 
 
 def test_kpis_default_counts_to_zero_and_leave_ratios_undefined():
-    clean = normalize_kpis({"slips_total": None, "conversion_pct": None, "amount_received": None})
+    clean = normalize_kpis(
+        {"slips_total": None, "paid_in_grace_pct": None, "amount_received": None}
+    )
     assert clean["slips_total"] == 0 and clean["amount_received"] == 0
-    assert clean["conversion_pct"] is None and clean["effectiveness_pct"] is None
+    assert clean["paid_in_grace_pct"] is None and clean["effectiveness_pct"] is None
     assert set(clean) == set(queries.SUMMARY_COLUMNS)
     assert normalize_kpis(None)["slips_total"] == 0
 
@@ -109,7 +111,7 @@ def test_summary_returns_kpis_the_daily_series_and_the_extreme_days(client_for):
 
 def test_summary_of_an_empty_window_is_zeros_not_an_error(client_for):
     data = client_for().get("/effectiveness/summary", params=WINDOW).json()["data"]
-    assert data["kpis"]["slips_total"] == 0 and data["kpis"]["conversion_pct"] is None
+    assert data["kpis"]["slips_total"] == 0 and data["kpis"]["paid_in_grace_pct"] is None
     assert data["daily"] == [] and data["best_day"] is None and data["worst_day"] is None
 
 

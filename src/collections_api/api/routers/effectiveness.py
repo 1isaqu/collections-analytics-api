@@ -197,9 +197,10 @@ def slips(
 ):
     """Slips due in the period that fall in one bucket, largest first.
 
-    The list is capped at `EFFECTIVENESS_DETAIL_ROW_LIMIT` rows. When the cap is reached
-    `meta.quality.truncated` and `meta.pagination.truncated` are true, and the list is
-    shorter than the matching KPI count.
+    The list is capped at `EFFECTIVENESS_DETAIL_ROW_LIMIT` rows. When the list reaches the
+    cap, `meta.quality.truncated` and `meta.pagination.truncated` are true and rows may be
+    missing. A list with exactly that many rows is flagged too, because the query cannot
+    tell it from a cut one, so read the flag as "may be truncated".
     """
     line = ctx.cfg.resolve_line(line)
     period = Period.between(date_from, date_to)

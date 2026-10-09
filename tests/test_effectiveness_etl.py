@@ -20,7 +20,7 @@ ROW = {
     "issue_date": "2026-03-01",
     "slips_issued": 2,
     "slips_paid_in_grace": 1,
-    "conversion_pct": 50,
+    "paid_in_grace_pct": 50,
 }
 
 

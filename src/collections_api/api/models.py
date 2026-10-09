@@ -3,13 +3,14 @@
 They document the API; they do not validate it. Routes return plain dictionaries and
 declare these classes only through ``responses=`` (see ``api/common.py``), so a row the
 database returns is never rewritten or dropped by a schema. Their job is the OpenAPI
-document and ``docs/api-contract.md``, which the UI is built against. A test compares
+document and ``docs/api-contract.md``, which a front end can be built against. A test compares
 every model with the column list of the SQL builder behind it, so a renamed column
 fails the build instead of a client.
 
 Conventions: amounts are plain numbers (no currency symbol); timestamps are ISO 8601
 strings; ``*_pct`` fields are percentages from 0 to 100 and are ``null`` when their
-denominator is zero; ``*_count`` fields are integers.
+denominator is zero (the performance table returns 0 instead, as its field notes say);
+``*_count`` fields are integers.
 """
 
 from __future__ import annotations
@@ -161,16 +162,16 @@ class PerformanceRow(ContractModel):
 class ProductivityRow(ContractModel):
     agent_login: str
     agent_name: str
-    attempt_count: float = Field(description="Distinct debt owners contacted in the window.")
-    answer_count: float = Field(description="Of those, how many answered.")
-    cpc_count: float = Field(description="Of those, how many were the right party.")
+    attempt_count: int = Field(description="Distinct debt owners contacted in the window.")
+    answer_count: int = Field(description="Of those, how many answered.")
+    cpc_count: int = Field(description="Of those, how many were the right party.")
     cpc_rate_pct: float | None = Field(description="cpc_count / answer_count * 100, rounded up.")
-    agreement_count: float
-    agreement_count_by_contract: float = Field(
+    agreement_count: int
+    agreement_count_by_contract: int = Field(
         description="Agreements counted per debt: one agreement covering N debts counts N."
     )
-    slips_issued: float
-    slips_paid: float
+    slips_issued: int
+    slips_paid: int
     agreements_per_attempt_pct: float | None
     agreement_value: float
     avg_ticket: float = Field(description="Average agreement value.")
@@ -178,10 +179,10 @@ class ProductivityRow(ContractModel):
     avg_balance_ratio_pct: float = Field(description="Agreement value over original debt balance.")
     first_installment_value: float
     first_installment_received: float
-    exception_count: float
+    exception_count: int
     exception_value: float
     exception_first_installment_value: float
-    rejected_count: float = Field(description="Distinct rejected debts.")
+    rejected_count: int = Field(description="Distinct rejected debts.")
     rejected_value: float
     rejected_first_installment_value: float
     avg_debt_age_days: float
@@ -357,14 +358,14 @@ class SeriesByIssueDayRow(ContractModel):
     issue_date: str = Field(description="YYYY-MM-DD.")
     slips_issued: int
     slips_paid_in_grace: int
-    conversion_pct: int = Field(description="Whole percent, rounded half up.")
+    paid_in_grace_pct: int = Field(description="Whole percent, rounded half up.")
 
 
 class SeriesByDueDayRow(ContractModel):
     due_date: str = Field(description="YYYY-MM-DD.")
     slips_issued: int
     slips_paid_in_grace: int
-    conversion_pct: int
+    paid_in_grace_pct: int
 
 
 class SeriesByMonthRow(ContractModel):
@@ -372,7 +373,7 @@ class SeriesByMonthRow(ContractModel):
     month: int
     slips_issued: int
     slips_paid_in_grace: int
-    conversion_pct: int
+    paid_in_grace_pct: int
 
 
 class SeriesByAgentMonthRow(ContractModel):
@@ -381,7 +382,7 @@ class SeriesByAgentMonthRow(ContractModel):
     month: int
     slips_issued: int
     slips_paid_in_grace: int
-    conversion_pct: int
+    paid_in_grace_pct: int
 
 
 class SeriesByAgentMonthBrokenRow(SeriesByAgentMonthRow):
@@ -396,7 +397,7 @@ class EffectivenessKpis(ContractModel):
     slips_overdue_unpaid: int = Field(description="Overdue with the grace period over.")
     slips_paid_in_grace: int
     slips_broken: int
-    conversion_pct: float | None = Field(description="slips_paid_in_grace / slips_total * 100.")
+    paid_in_grace_pct: float | None = Field(description="slips_paid_in_grace / slips_total * 100.")
     amount_maturing: float
     amount_received: float
     effectiveness_pct: float | None = Field(description="amount_received / amount_maturing * 100.")
@@ -406,7 +407,7 @@ class EffectivenessDay(ContractModel):
     due_date: str
     slips_total: int
     slips_paid_in_grace: int
-    conversion_pct: float | None
+    paid_in_grace_pct: float | None
     amount_maturing: float
     amount_received: float
     effectiveness_pct: float | None

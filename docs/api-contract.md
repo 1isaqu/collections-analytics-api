@@ -49,8 +49,9 @@ document that they return 0 instead). No field identifies a debtor.
 Authentication is off unless the server runs with `REQUIRE_API_AUTH=true`. When it is on,
 every route except `GET /health/live` needs both the `X-API-Key` header and an
 `Authorization: Bearer <token>` header; anything else is a 401. Routes under `/dashboard/`,
-`/effectiveness/`, `/regression/` and `/admin/` are rate limited per client address; the
-429 response carries a `Retry-After` header in seconds. Every response carries an
+`/effectiveness/`, `/regression/` and `/admin/` are rate limited per client address, and a
+request counts whether or not its credentials are accepted. The 429 response carries a
+`Retry-After` header in seconds. Every response carries an
 `X-Run-Id` header, the same value as `meta.run_id`. A client may send its own `X-Run-Id`
 (letters, digits, `.`, `_`, `-`, up to 64 characters) and get it back.
 
@@ -504,14 +505,14 @@ values could not be read and were replaced by zero.
 |---|---|---|---|
 | `agent_login` | string | yes | Agent login, as stored in `agents.login`. |
 | `agent_name` | string | yes | Agent display name, as stored in `agents.display_name`. |
-| `attempt_count` | number | yes | Distinct debt owners contacted in the window. |
-| `answer_count` | number | yes | Of those, how many answered. |
-| `cpc_count` | number | yes | Of those, how many were the right party. |
+| `attempt_count` | integer | yes | Distinct debt owners contacted in the window. |
+| `answer_count` | integer | yes | Of those, how many answered. |
+| `cpc_count` | integer | yes | Of those, how many were the right party. |
 | `cpc_rate_pct` | number, nullable | yes | cpc_count / answer_count * 100, rounded up. |
-| `agreement_count` | number | yes | Number of agreements counted. |
-| `agreement_count_by_contract` | number | yes | Agreements counted per debt: one agreement covering N debts counts N. |
-| `slips_issued` | number | yes | Slips (installments) counted. |
-| `slips_paid` | number | yes | Of those, slips paid within the grace period. |
+| `agreement_count` | integer | yes | Number of agreements counted. |
+| `agreement_count_by_contract` | integer | yes | Agreements counted per debt: one agreement covering N debts counts N. |
+| `slips_issued` | integer | yes | Slips (installments) counted. |
+| `slips_paid` | integer | yes | Of those, slips paid within the grace period. |
 | `agreements_per_attempt_pct` | number, nullable | yes | agreement_count / attempt_count * 100. `null` without attempts. |
 | `agreement_value` | number | yes | Sum of the amounts of every installment of the counted agreements. |
 | `avg_ticket` | number | yes | Average agreement value. |
@@ -519,10 +520,10 @@ values could not be read and were replaced by zero.
 | `avg_balance_ratio_pct` | number | yes | Agreement value over original debt balance. |
 | `first_installment_value` | number | yes | First-installment amount (installment 0); a total on aggregate routes. |
 | `first_installment_received` | number | yes | Amount paid on the first installments. |
-| `exception_count` | number | yes | Number of agreements pending approval (exceptions). |
+| `exception_count` | integer | yes | Number of agreements pending approval (exceptions). |
 | `exception_value` | number | yes | Sum of the amounts of the exception agreements. |
 | `exception_first_installment_value` | number | yes | First-installment amount of the exception agreements. |
-| `rejected_count` | number | yes | Distinct rejected debts. |
+| `rejected_count` | integer | yes | Distinct rejected debts. |
 | `rejected_value` | number | yes | Sum of the amounts of the rejected agreements. |
 | `rejected_first_installment_value` | number | yes | First-installment amount of the rejected agreements. |
 | `avg_debt_age_days` | number | yes | Average days from the earliest covered debt's due date to the window start. |
@@ -1758,7 +1759,7 @@ A slip is one installment row. It counts as paid in grace when a positive amount
 | `issue_date` | string | yes | YYYY-MM-DD. |
 | `slips_issued` | integer | yes | Slips (installments) counted. |
 | `slips_paid_in_grace` | integer | yes | Slips paid, for a positive amount, within the grace period. |
-| `conversion_pct` | integer | yes | Whole percent, rounded half up. |
+| `paid_in_grace_pct` | integer | yes | Whole percent, rounded half up. |
 
 `meta.filters` keys
 
@@ -1807,7 +1808,7 @@ A slip is one installment row. It counts as paid in grace when a positive amount
 | `month` | integer | yes | Calendar month, 1 to 12. |
 | `slips_issued` | integer | yes | Slips (installments) counted. |
 | `slips_paid_in_grace` | integer | yes | Slips paid, for a positive amount, within the grace period. |
-| `conversion_pct` | integer | yes | Whole percent of slips paid in grace, rounded half up. |
+| `paid_in_grace_pct` | integer | yes | Whole percent of slips paid in grace, rounded half up. |
 
 `meta.filters` keys
 
@@ -1855,7 +1856,7 @@ A slip is one installment row. It counts as paid in grace when a positive amount
 | `issue_date` | string | yes | YYYY-MM-DD. |
 | `slips_issued` | integer | yes | Slips (installments) counted. |
 | `slips_paid_in_grace` | integer | yes | Slips paid, for a positive amount, within the grace period. |
-| `conversion_pct` | integer | yes | Whole percent, rounded half up. |
+| `paid_in_grace_pct` | integer | yes | Whole percent, rounded half up. |
 
 `meta.filters` keys
 
@@ -1904,7 +1905,7 @@ A slip is one installment row. It counts as paid in grace when a positive amount
 | `month` | integer | yes | Calendar month, 1 to 12. |
 | `slips_issued` | integer | yes | Slips (installments) counted. |
 | `slips_paid_in_grace` | integer | yes | Slips paid, for a positive amount, within the grace period. |
-| `conversion_pct` | integer | yes | Whole percent of slips paid in grace, rounded half up. |
+| `paid_in_grace_pct` | integer | yes | Whole percent of slips paid in grace, rounded half up. |
 
 `meta.filters` keys
 
@@ -1952,7 +1953,7 @@ A slip is one installment row. It counts as paid in grace when a positive amount
 | `due_date` | string | yes | YYYY-MM-DD. |
 | `slips_issued` | integer | yes | Slips (installments) counted. |
 | `slips_paid_in_grace` | integer | yes | Slips paid, for a positive amount, within the grace period. |
-| `conversion_pct` | integer | yes | Whole percent of slips paid in grace, rounded half up. |
+| `paid_in_grace_pct` | integer | yes | Whole percent of slips paid in grace, rounded half up. |
 
 `meta.filters` keys
 
@@ -2001,7 +2002,7 @@ A slip is one installment row. It counts as paid in grace when a positive amount
 | `month` | integer | yes | Calendar month, 1 to 12. |
 | `slips_issued` | integer | yes | Slips (installments) counted. |
 | `slips_paid_in_grace` | integer | yes | Slips paid, for a positive amount, within the grace period. |
-| `conversion_pct` | integer | yes | Whole percent of slips paid in grace, rounded half up. |
+| `paid_in_grace_pct` | integer | yes | Whole percent of slips paid in grace, rounded half up. |
 
 `meta.filters` keys
 
@@ -2051,7 +2052,7 @@ A slip is one installment row. It counts as paid in grace when a positive amount
 | `month` | integer | yes | Calendar month, 1 to 12. |
 | `slips_issued` | integer | yes | Slips (installments) counted. |
 | `slips_paid_in_grace` | integer | yes | Slips paid, for a positive amount, within the grace period. |
-| `conversion_pct` | integer | yes | Whole percent of slips paid in grace, rounded half up. |
+| `paid_in_grace_pct` | integer | yes | Whole percent of slips paid in grace, rounded half up. |
 
 `meta.filters` keys
 
@@ -2101,7 +2102,7 @@ A slip is one installment row. It counts as paid in grace when a positive amount
 | `month` | integer | yes | Calendar month, 1 to 12. |
 | `slips_issued` | integer | yes | Slips (installments) counted. |
 | `slips_paid_in_grace` | integer | yes | Slips paid, for a positive amount, within the grace period. |
-| `conversion_pct` | integer | yes | Whole percent of slips paid in grace, rounded half up. |
+| `paid_in_grace_pct` | integer | yes | Whole percent of slips paid in grace, rounded half up. |
 
 `meta.filters` keys
 
@@ -2151,7 +2152,7 @@ A slip is one installment row. It counts as paid in grace when a positive amount
 | `month` | integer | yes | Calendar month, 1 to 12. |
 | `slips_issued` | integer | yes | Slips (installments) counted. |
 | `slips_paid_in_grace` | integer | yes | Slips paid, for a positive amount, within the grace period. |
-| `conversion_pct` | integer | yes | Whole percent of slips paid in grace, rounded half up. |
+| `paid_in_grace_pct` | integer | yes | Whole percent of slips paid in grace, rounded half up. |
 | `broken_count` | integer | yes | Slips whose agreement is in a broken status. |
 
 `meta.filters` keys
@@ -2228,9 +2229,10 @@ Operation `effectiveness_slips`. Needs credentials when authentication is on: ye
 
 Slips due in the period that fall in one bucket, largest first.
 
-The list is capped at `EFFECTIVENESS_DETAIL_ROW_LIMIT` rows. When the cap is reached
-`meta.quality.truncated` and `meta.pagination.truncated` are true, and the list is
-shorter than the matching KPI count.
+The list is capped at `EFFECTIVENESS_DETAIL_ROW_LIMIT` rows. When the list reaches the
+cap, `meta.quality.truncated` and `meta.pagination.truncated` are true and rows may be
+missing. A list with exactly that many rows is flagged too, because the query cannot
+tell it from a cut one, so read the flag as "may be truncated".
 
 **Parameters**
 
@@ -2597,7 +2599,7 @@ Types that appear inside the rows above.
 | `due_date` | string | yes | Due date, `YYYY-MM-DD`. |
 | `slips_total` | integer | yes | Slips counted. |
 | `slips_paid_in_grace` | integer | yes | Slips paid, for a positive amount, within the grace period. |
-| `conversion_pct` | number, nullable | yes | slips_paid_in_grace / slips_total * 100. |
+| `paid_in_grace_pct` | number, nullable | yes | slips_paid_in_grace / slips_total * 100. |
 | `amount_maturing` | number | yes | Sum of the slip amounts. |
 | `amount_received` | number | yes | Sum paid on the slips, whenever it was paid. |
 | `effectiveness_pct` | number, nullable | yes | amount_received / amount_maturing * 100. `null` when nothing matures. |
@@ -2613,7 +2615,7 @@ Types that appear inside the rows above.
 | `slips_overdue_unpaid` | integer | yes | Overdue with the grace period over. |
 | `slips_paid_in_grace` | integer | yes | Slips paid, for a positive amount, within the grace period. |
 | `slips_broken` | integer | yes | Slips whose agreement is in a broken status. |
-| `conversion_pct` | number, nullable | yes | slips_paid_in_grace / slips_total * 100. |
+| `paid_in_grace_pct` | number, nullable | yes | slips_paid_in_grace / slips_total * 100. |
 | `amount_maturing` | number | yes | Sum of the slip amounts. |
 | `amount_received` | number | yes | Sum paid on the slips, whenever it was paid. |
 | `effectiveness_pct` | number, nullable | yes | amount_received / amount_maturing * 100. |

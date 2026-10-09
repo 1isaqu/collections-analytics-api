@@ -46,6 +46,18 @@ _ZERO_IF_NULL = (
     "avg_debt_age_days",
     "hours_worked",
 )
+# Of those, the ones that count whole things. They leave the service as integers.
+_COUNTS = (
+    "attempt_count",
+    "answer_count",
+    "cpc_count",
+    "agreement_count",
+    "agreement_count_by_contract",
+    "slips_issued",
+    "slips_paid",
+    "exception_count",
+    "rejected_count",
+)
 # Ratios: a missing value means "undefined" (zero denominator) and stays null.
 _RATIOS = ("cpc_rate_pct", "agreements_per_attempt_pct")
 
@@ -75,10 +87,11 @@ def validate_productivity_rows(
                 out[field] = 0
                 continue
             try:
-                out[field] = float(value)
-            except (TypeError, ValueError):
+                number = float(value)
+                out[field] = int(number) if field in _COUNTS else number
+            except (TypeError, ValueError, OverflowError):
                 cast_failures += 1
-                out[field] = 0.0
+                out[field] = 0 if field in _COUNTS else 0.0
         for field in _RATIOS:
             value = out.get(field)
             if value is None:

@@ -6078,7 +6078,7 @@
           "effectiveness"
         ],
         "summary": "The slips behind one KPI bucket",
-        "description": "Slips due in the period that fall in one bucket, largest first.\n\nThe list is capped at `EFFECTIVENESS_DETAIL_ROW_LIMIT` rows. When the cap is reached\n`meta.quality.truncated` and `meta.pagination.truncated` are true, and the list is\nshorter than the matching KPI count.",
+        "description": "Slips due in the period that fall in one bucket, largest first.\n\nThe list is capped at `EFFECTIVENESS_DETAIL_ROW_LIMIT` rows. When the list reaches the\ncap, `meta.quality.truncated` and `meta.pagination.truncated` are true and rows may be\nmissing. A list with exactly that many rows is flagged too, because the query cannot\ntell it from a cut one, so read the flag as \"may be truncated\".",
         "operationId": "effectiveness_slips",
         "parameters": [
           {
@@ -8283,7 +8283,7 @@
             "title": "Slips Paid In Grace",
             "description": "Slips paid, for a positive amount, within the grace period."
           },
-          "conversion_pct": {
+          "paid_in_grace_pct": {
             "anyOf": [
               {
                 "type": "number"
@@ -8292,7 +8292,7 @@
                 "type": "null"
               }
             ],
-            "title": "Conversion Pct",
+            "title": "Paid In Grace Pct",
             "description": "slips_paid_in_grace / slips_total * 100."
           },
           "amount_maturing": {
@@ -8323,7 +8323,7 @@
           "due_date",
           "slips_total",
           "slips_paid_in_grace",
-          "conversion_pct",
+          "paid_in_grace_pct",
           "amount_maturing",
           "amount_received",
           "effectiveness_pct"
@@ -8367,7 +8367,7 @@
             "title": "Slips Broken",
             "description": "Slips whose agreement is in a broken status."
           },
-          "conversion_pct": {
+          "paid_in_grace_pct": {
             "anyOf": [
               {
                 "type": "number"
@@ -8376,7 +8376,7 @@
                 "type": "null"
               }
             ],
-            "title": "Conversion Pct",
+            "title": "Paid In Grace Pct",
             "description": "slips_paid_in_grace / slips_total * 100."
           },
           "amount_maturing": {
@@ -8411,7 +8411,7 @@
           "slips_overdue_unpaid",
           "slips_paid_in_grace",
           "slips_broken",
-          "conversion_pct",
+          "paid_in_grace_pct",
           "amount_maturing",
           "amount_received",
           "effectiveness_pct"
@@ -9972,17 +9972,17 @@
             "description": "Agent display name, as stored in `agents.display_name`."
           },
           "attempt_count": {
-            "type": "number",
+            "type": "integer",
             "title": "Attempt Count",
             "description": "Distinct debt owners contacted in the window."
           },
           "answer_count": {
-            "type": "number",
+            "type": "integer",
             "title": "Answer Count",
             "description": "Of those, how many answered."
           },
           "cpc_count": {
-            "type": "number",
+            "type": "integer",
             "title": "Cpc Count",
             "description": "Of those, how many were the right party."
           },
@@ -9999,22 +9999,22 @@
             "description": "cpc_count / answer_count * 100, rounded up."
           },
           "agreement_count": {
-            "type": "number",
+            "type": "integer",
             "title": "Agreement Count",
             "description": "Number of agreements counted."
           },
           "agreement_count_by_contract": {
-            "type": "number",
+            "type": "integer",
             "title": "Agreement Count By Contract",
             "description": "Agreements counted per debt: one agreement covering N debts counts N."
           },
           "slips_issued": {
-            "type": "number",
+            "type": "integer",
             "title": "Slips Issued",
             "description": "Slips (installments) counted."
           },
           "slips_paid": {
-            "type": "number",
+            "type": "integer",
             "title": "Slips Paid",
             "description": "Of those, slips paid within the grace period."
           },
@@ -10061,7 +10061,7 @@
             "description": "Amount paid on the first installments."
           },
           "exception_count": {
-            "type": "number",
+            "type": "integer",
             "title": "Exception Count",
             "description": "Number of agreements pending approval (exceptions)."
           },
@@ -10076,7 +10076,7 @@
             "description": "First-installment amount of the exception agreements."
           },
           "rejected_count": {
-            "type": "number",
+            "type": "integer",
             "title": "Rejected Count",
             "description": "Distinct rejected debts."
           },
@@ -10656,9 +10656,9 @@
             "title": "Slips Paid In Grace",
             "description": "Slips paid, for a positive amount, within the grace period."
           },
-          "conversion_pct": {
+          "paid_in_grace_pct": {
             "type": "integer",
-            "title": "Conversion Pct",
+            "title": "Paid In Grace Pct",
             "description": "Whole percent of slips paid in grace, rounded half up."
           },
           "broken_count": {
@@ -10674,7 +10674,7 @@
           "month",
           "slips_issued",
           "slips_paid_in_grace",
-          "conversion_pct",
+          "paid_in_grace_pct",
           "broken_count"
         ],
         "title": "SeriesByAgentMonthBrokenRow"
@@ -10743,9 +10743,9 @@
             "title": "Slips Paid In Grace",
             "description": "Slips paid, for a positive amount, within the grace period."
           },
-          "conversion_pct": {
+          "paid_in_grace_pct": {
             "type": "integer",
-            "title": "Conversion Pct",
+            "title": "Paid In Grace Pct",
             "description": "Whole percent of slips paid in grace, rounded half up."
           }
         },
@@ -10756,7 +10756,7 @@
           "month",
           "slips_issued",
           "slips_paid_in_grace",
-          "conversion_pct"
+          "paid_in_grace_pct"
         ],
         "title": "SeriesByAgentMonthRow"
       },
@@ -10807,9 +10807,9 @@
             "title": "Slips Paid In Grace",
             "description": "Slips paid, for a positive amount, within the grace period."
           },
-          "conversion_pct": {
+          "paid_in_grace_pct": {
             "type": "integer",
-            "title": "Conversion Pct",
+            "title": "Paid In Grace Pct",
             "description": "Whole percent of slips paid in grace, rounded half up."
           }
         },
@@ -10818,7 +10818,7 @@
           "due_date",
           "slips_issued",
           "slips_paid_in_grace",
-          "conversion_pct"
+          "paid_in_grace_pct"
         ],
         "title": "SeriesByDueDayRow"
       },
@@ -10869,9 +10869,9 @@
             "title": "Slips Paid In Grace",
             "description": "Slips paid, for a positive amount, within the grace period."
           },
-          "conversion_pct": {
+          "paid_in_grace_pct": {
             "type": "integer",
-            "title": "Conversion Pct",
+            "title": "Paid In Grace Pct",
             "description": "Whole percent, rounded half up."
           }
         },
@@ -10880,7 +10880,7 @@
           "issue_date",
           "slips_issued",
           "slips_paid_in_grace",
-          "conversion_pct"
+          "paid_in_grace_pct"
         ],
         "title": "SeriesByIssueDayRow"
       },
@@ -10936,9 +10936,9 @@
             "title": "Slips Paid In Grace",
             "description": "Slips paid, for a positive amount, within the grace period."
           },
-          "conversion_pct": {
+          "paid_in_grace_pct": {
             "type": "integer",
-            "title": "Conversion Pct",
+            "title": "Paid In Grace Pct",
             "description": "Whole percent of slips paid in grace, rounded half up."
           }
         },
@@ -10948,7 +10948,7 @@
           "month",
           "slips_issued",
           "slips_paid_in_grace",
-          "conversion_pct"
+          "paid_in_grace_pct"
         ],
         "title": "SeriesByMonthRow"
       },

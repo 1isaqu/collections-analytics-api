@@ -60,7 +60,7 @@ zero is `null`, except where the field description says it is 0.
 | `avg_balance_ratio_pct` | Average of agreement value over the balance of the debts it covers. |
 | `avg_debt_age_days` | Average days from the earliest covered debt's due date to the start of the window. |
 | `hours_worked` | A proxy: for each day, the span between an agent's first and last generated agreement, summed. |
-| `conversion_pct` (effectiveness routes) | `slips_paid_in_grace / slips_total * 100`. The name is shared with the productivity measure; the route and the model description say which one applies. |
+| `paid_in_grace_pct` | `slips_paid_in_grace / slips_total * 100`, on the effectiveness routes. Not the same measure as `conversion_pct`. |
 | `effectiveness_pct` | `amount_received / amount_maturing * 100`. |
 | `cash_effectiveness_pct` (benchmarks) | Per agent, first-installment cash received over first-installment value. |
 | `break_rate_pct` | `slips_broken / slips_total * 100` in a break-curve band. |

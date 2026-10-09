@@ -39,7 +39,7 @@ SUMMARY_COLUMNS = (
     "slips_overdue_unpaid",
     "slips_paid_in_grace",
     "slips_broken",
-    "conversion_pct",
+    "paid_in_grace_pct",
     "amount_maturing",
     "amount_received",
     "effectiveness_pct",
@@ -48,7 +48,7 @@ DAILY_COLUMNS = (
     "due_date",
     "slips_total",
     "slips_paid_in_grace",
-    "conversion_pct",
+    "paid_in_grace_pct",
     "amount_maturing",
     "amount_received",
     "effectiveness_pct",
@@ -99,7 +99,7 @@ class SeriesSpec:
     @property
     def columns(self) -> tuple[str, ...]:
         date_name = "issue_date" if self.date_column == "issued_at" else "due_date"
-        base = ("slips_issued", "slips_paid_in_grace", "conversion_pct")
+        base = ("slips_issued", "slips_paid_in_grace", "paid_in_grace_pct")
         if self.grain == "day":
             return (date_name, *base)
         if self.grain == "month":
@@ -158,7 +158,7 @@ def series_query(cfg: QueryConfig, line: str, key: str) -> Query:
     spec = SERIES[key]
     column = spec.date_column
     paid = f"SUM({cfg.paid_in_grace()}) AS slips_paid_in_grace"
-    conversion = f"{_rounded_pct(cfg)} AS conversion_pct"
+    paid_pct = f"{_rounded_pct(cfg)} AS paid_in_grace_pct"
 
     def base(_line: str, database: str) -> Query:
         extra = (
@@ -179,13 +179,13 @@ WHERE R.rn = 1
         name = "issue_date" if column == "issued_at" else "due_date"
         sql = (
             f"SELECT CAST({column} AS DATE) AS {name}, COUNT(*) AS slips_issued,\n"
-            f"       {paid}, {conversion}\n"
+            f"       {paid}, {paid_pct}\n"
             f"FROM (\n{inner}\n) AS T\nGROUP BY CAST({column} AS DATE)\nORDER BY {name}"
         )
     elif spec.grain == "month":
         sql = (
             f"SELECT YEAR({column}) AS year, MONTH({column}) AS month, COUNT(*) AS slips_issued,\n"
-            f"       {paid}, {conversion}\n"
+            f"       {paid}, {paid_pct}\n"
             f"FROM (\n{inner}\n) AS T\n"
             f"GROUP BY YEAR({column}), MONTH({column})\nORDER BY year, month"
         )
@@ -200,7 +200,7 @@ WHERE R.rn = 1
             having = f"\nHAVING COUNT(*) >= {int(cfg.effectiveness_min_slips)}"
         sql = (
             f"SELECT agent_login, YEAR({column}) AS year, MONTH({column}) AS month,\n"
-            f"       COUNT(*) AS slips_issued, {paid}, {conversion}{broken}\n"
+            f"       COUNT(*) AS slips_issued, {paid}, {paid_pct}{broken}\n"
             f"FROM (\n{inner}\n) AS T\n"
             f"GROUP BY agent_login, YEAR({column}), MONTH({column}){having}\n"
             "ORDER BY year, month, agent_login"
@@ -277,7 +277,7 @@ SELECT COUNT(*) AS slips_total,
            AS slips_overdue_unpaid,
        SUM({paid}) AS slips_paid_in_grace,
        SUM(CASE WHEN status_id IN {cfg.status.sql("broken")} THEN 1 ELSE 0 END) AS slips_broken,
-       CAST(100.0 * SUM({paid}) / NULLIF(COUNT(*), 0) AS DECIMAL(8, 2)) AS conversion_pct,
+       CAST(100.0 * SUM({paid}) / NULLIF(COUNT(*), 0) AS DECIMAL(8, 2)) AS paid_in_grace_pct,
        COALESCE(SUM(amount), 0) AS amount_maturing,
        COALESCE(SUM({received}), 0) AS amount_received,
        CAST(100.0 * SUM({received}) / NULLIF(SUM(amount), 0) AS DECIMAL(8, 2)) AS effectiveness_pct
@@ -288,7 +288,7 @@ FROM (
 SELECT CAST(due_at AS DATE) AS due_date,
        COUNT(*) AS slips_total,
        SUM({paid}) AS slips_paid_in_grace,
-       CAST(100.0 * SUM({paid}) / NULLIF(COUNT(*), 0) AS DECIMAL(8, 2)) AS conversion_pct,
+       CAST(100.0 * SUM({paid}) / NULLIF(COUNT(*), 0) AS DECIMAL(8, 2)) AS paid_in_grace_pct,
        COALESCE(SUM(amount), 0) AS amount_maturing,
        COALESCE(SUM({received}), 0) AS amount_received,
        CAST(100.0 * SUM({received}) / NULLIF(SUM(amount), 0) AS DECIMAL(8, 2)) AS effectiveness_pct
