@@ -3,7 +3,7 @@
 A targets document may have no detectable table grid, so the extractor works from
 words and their coordinates (what ``pdfplumber`` returns from ``extract_words``). The
 header row fixes the x position of every column; each word on the following lines goes to
-the nearest column by its horizontal centre.
+the nearest column by its horizontal center.
 
 Expected layout, left to right (the 16 columns are configurable only by editing
 ``Layout``): office, portfolio, group, headcount, then four metrics with one column per
@@ -107,7 +107,7 @@ def group_lines(words: Sequence[Word], tolerance: float) -> list[list[Word]]:
 
 
 def assign_columns(line: Sequence[Word], centers: Sequence[float]) -> list[str]:
-    """Put each word in the column whose boundary interval contains its centre."""
+    """Put each word in the column whose boundary interval contains its center."""
     bounds = [(centers[i] + centers[i + 1]) / 2 for i in range(len(centers) - 1)]
     cells = [""] * len(centers)
     for word in sorted(line, key=lambda w: w["x0"]):

@@ -7974,19 +7974,19 @@
         "properties": {
           "cpc_rate_pct": {
             "$ref": "#/components/schemas/Quartiles",
-            "description": "Per-agent cpc_count / answer_count * 100, summarised."
+            "description": "Per-agent cpc_count / answer_count * 100, summarized."
           },
           "conversion_pct": {
             "$ref": "#/components/schemas/Quartiles",
-            "description": "Per-agent agreement_count / cpc_count * 100, summarised."
+            "description": "Per-agent agreement_count / cpc_count * 100, summarized."
           },
           "cash_effectiveness_pct": {
             "$ref": "#/components/schemas/Quartiles",
-            "description": "Per-agent first-installment cash received over first-installment value, summarised."
+            "description": "Per-agent first-installment cash received over first-installment value, summarized."
           },
           "exception_pct": {
             "$ref": "#/components/schemas/Quartiles",
-            "description": "Per-agent exception value over total agreement value, summarised."
+            "description": "Per-agent exception value over total agreement value, summarized."
           },
           "agent_count": {
             "type": "integer",

@@ -717,10 +717,10 @@ samples cannot move a quartile. The scan is wide, so the result is cached for
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `cpc_rate_pct` | [`Quartiles`](#quartiles) | yes | Per-agent cpc_count / answer_count * 100, summarised. |
-| `conversion_pct` | [`Quartiles`](#quartiles) | yes | Per-agent agreement_count / cpc_count * 100, summarised. |
-| `cash_effectiveness_pct` | [`Quartiles`](#quartiles) | yes | Per-agent first-installment cash received over first-installment value, summarised. |
-| `exception_pct` | [`Quartiles`](#quartiles) | yes | Per-agent exception value over total agreement value, summarised. |
+| `cpc_rate_pct` | [`Quartiles`](#quartiles) | yes | Per-agent cpc_count / answer_count * 100, summarized. |
+| `conversion_pct` | [`Quartiles`](#quartiles) | yes | Per-agent agreement_count / cpc_count * 100, summarized. |
+| `cash_effectiveness_pct` | [`Quartiles`](#quartiles) | yes | Per-agent first-installment cash received over first-installment value, summarized. |
+| `exception_pct` | [`Quartiles`](#quartiles) | yes | Per-agent exception value over total agreement value, summarized. |
 | `agent_count` | integer | yes | Agents that passed the minimum-sample rules. |
 | `lookback_months` | integer | yes | Look-back window that was applied, in months. |
 

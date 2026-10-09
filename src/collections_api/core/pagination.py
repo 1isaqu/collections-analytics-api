@@ -1,4 +1,4 @@
-"""Limit/offset normalisation for the one paged route."""
+"""Limit/offset normalization for the one paged route."""
 
 from __future__ import annotations
 
