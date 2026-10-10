@@ -168,7 +168,7 @@ def test_a_zero_efficiency_does_not_break_the_log_model():
     assert math.isfinite(loglog.intercept)
 
 
-# ---------------------------------------------------------------- serialisation
+# ---------------------------------------------------------------- serialization
 
 
 def test_to_dict_is_json_ready_and_rounded():
