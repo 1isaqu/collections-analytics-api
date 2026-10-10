@@ -33,3 +33,7 @@ node_modules/
 logs/
 *.log
 .DS_Store
+
+# Local notes
+HANDOFF.md
+NEXT-AI-SUMMARY.md
