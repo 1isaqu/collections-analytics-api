@@ -2,7 +2,7 @@
 
 A read-only FastAPI service that turns eight relational tables into collections KPIs: agreements generated, agent productivity, whether payment slips get paid on time, quarterly targets, and a few aggregates for charts and drill-downs. It runs on SQL Server (T-SQL), answers its data routes with one `{ meta, data, errors }` envelope, caches and pools connections, and ships a generated OpenAPI document and endpoint reference so a front end can be built against it before any database exists.
 
-This is an independent portfolio project. It is not affiliated with any company and contains no real data: every table name, status id and portfolio label in the repository is invented, and the business defaults are placeholders.
+Built from problems I work on in debt collections and rewritten on synthetic data. It contains no real data: every table name, status id and portfolio label in the repository is invented, and the business defaults are placeholders.
 
 ## What it does
 
